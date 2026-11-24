@@ -147,7 +147,18 @@ textarea::placeholder { color: #444; }
 .drop-sub { font-size: 0.85rem; color: var(--text-muted); font-weight: 300; line-height: 1.4; display: block; }
 .image-preview-active { border-style: solid; border-color: var(--text-main); background: #111; }
 
-/* Aspect Ratio */
+/* Aspect Ratio & Color Toggle */
+.controls-row {
+    display: flex;
+    gap: 24px;
+}
+.control-col {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
 .ratio-group {
     display: flex;
     gap: 12px;
@@ -156,7 +167,7 @@ textarea::placeholder { color: #444; }
     border-radius: var(--radius);
     padding: 6px;
 }
-.ratio-btn {
+.ratio-btn, .color-btn {
     flex: 1;
     background: transparent;
     border: none;
@@ -171,7 +182,7 @@ textarea::placeholder { color: #444; }
     font-size: 0.9rem;
     transition: all 0.2s;
 }
-.ratio-btn.active { background: #222; color: var(--text-main); }
+.ratio-btn.active, .color-btn.active { background: #222; color: var(--text-main); }
 .glyph { border: 1.5px solid currentColor; display: inline-block; border-radius: 2px; }
 .glyph.w169 { width: 16px; height: 9px; }
 .glyph.w11 { width: 12px; height: 12px; }
@@ -233,12 +244,11 @@ textarea::placeholder { color: #444; }
     overflow: hidden;
 }
 
-#ascii-output {
+#ascii-output-container {
     font-family: var(--font-mono);
     font-size: 7px;
     line-height: 7px;
     white-space: pre;
-    color: var(--text-main);
     text-align: center;
     letter-spacing: 0;
 }
@@ -270,8 +280,6 @@ textarea::placeholder { color: #444; }
 .btn.white-btn {
     background: white; color: black; padding: 10px 20px; border: none; border-radius: 8px; font-weight: bold; cursor: pointer;
 }
-.donate-content { text-align: center; }
-.donate-content p { margin-bottom: 12px; }
 
 /* Modals */
 .hidden { display: none !important; }
@@ -319,3 +327,103 @@ textarea::placeholder { color: #444; }
     margin-bottom: 24px;
 }
 @keyframes spin { 100% { transform: rotate(360deg); } }
+
+/* OmniFeed Style Donate Modal */
+.donate-overlay {
+    background: rgba(0,0,0,0.6);
+}
+.donate-window {
+    background: white;
+    width: 420px;
+    border-radius: 12px;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+    overflow: hidden;
+    animation: slideUp 0.3s ease-out;
+}
+@keyframes slideUp {
+    from { opacity: 0; transform: translateY(20px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+.donate-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 12px 16px;
+}
+.donate-dots {
+    display: flex;
+    gap: 6px;
+}
+.donate-dots span {
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    background: #E0E0E0;
+}
+.donate-close {
+    background: transparent;
+    border: none;
+    font-size: 24px;
+    color: #999;
+    cursor: pointer;
+    line-height: 1;
+}
+.donate-close:hover { color: #333; }
+.donate-body {
+    padding: 24px 32px 40px;
+    text-align: center;
+}
+.donate-title {
+    color: #666;
+    font-size: 0.9rem;
+    margin-bottom: 4px;
+}
+.donate-name {
+    color: #000;
+    font-size: 1.4rem;
+    font-weight: 700;
+    margin-bottom: 8px;
+}
+.donate-desc {
+    color: #666;
+    font-size: 0.9rem;
+    line-height: 1.4;
+    margin-bottom: 24px;
+}
+.donate-button {
+    width: 100%;
+    padding: 14px;
+    border-radius: 24px;
+    border: none;
+    font-size: 1rem;
+    font-weight: 600;
+    cursor: pointer;
+    margin-bottom: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    text-decoration: none;
+    box-sizing: border-box;
+}
+.donate-button i {
+    font-style: italic;
+    font-weight: 800;
+    margin-right: 6px;
+}
+.btn-paypal {
+    background: #FFC439;
+    color: #003087;
+}
+.btn-paypal:hover { background: #F2B933; }
+.btn-paypal i { color: #0079C1; }
+.btn-venmo {
+    background: #008CFF;
+    color: white;
+}
+.btn-venmo:hover { background: #007BDE; }
+.btn-outline {
+    background: white;
+    border: 2px solid #003087;
+    color: #003087;
+}
+.btn-outline:hover { background: #F8F8F8; }

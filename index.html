@@ -42,11 +42,22 @@
             </div>
 
             <div class="section">
-                <label>ASPECT RATIO</label>
-                <div class="ratio-group">
-                    <button class="ratio-btn active" data-ratio="16:9">16:9 <span class="glyph w169"></span></button>
-                    <button class="ratio-btn" data-ratio="9:16">9:16 <span class="glyph w916"></span></button>
-                    <button class="ratio-btn" data-ratio="1:1">1:1 <span class="glyph w11"></span></button>
+                <div class="controls-row">
+                    <div class="control-col">
+                        <label>ASPECT RATIO</label>
+                        <div class="ratio-group">
+                            <button class="ratio-btn active" data-ratio="16:9">16:9 <span class="glyph w169"></span></button>
+                            <button class="ratio-btn" data-ratio="9:16">9:16 <span class="glyph w916"></span></button>
+                            <button class="ratio-btn" data-ratio="1:1">1:1 <span class="glyph w11"></span></button>
+                        </div>
+                    </div>
+                    <div class="control-col">
+                        <label>COLOR MODE</label>
+                        <div class="ratio-group">
+                            <button class="color-btn active" data-color="mono">B&W</button>
+                            <button class="color-btn" data-color="color">Color</button>
+                        </div>
+                    </div>
                 </div>
             </div>
 
@@ -62,11 +73,11 @@
             
             <div class="canvas-wrapper">
                 <canvas id="render-canvas" hidden></canvas>
-                <pre id="ascii-output"></pre>
+                <!-- the container that holds HTML output -->
+                <div id="ascii-output-container"></div>
             </div>
 
             <div class="export-actions">
-                <button id="export-text" class="btn ghost">Copy Text</button>
                 <button id="export-png" class="btn ghost">Save PNG</button>
             </div>
         </div>
@@ -79,23 +90,37 @@
             <h2>Welcome to ASCII Studio</h2>
             <p class="subheading">Your generator for complex text-art & digital styles.</p>
             <ul>
-                <li><strong>AI Prompts:</strong> Type a complex prompt. The app uses a free, keyless AI Image API to visualize your scene, then maps it locally into ASCII blocks.</li>
-                <li><strong>Source Images:</strong> Uploaded images bypass the AI and are perfectly pixel-mapped to ASCII based on contrast.</li>
-                <li><strong>Export:</strong> Save your creations directly to your device as PNG or plain text.</li>
+                <li><strong>AI Prompts:</strong> Type a complex prompt. The app generates an image matching your description and perfectly maps the pixels to ASCII.</li>
+                <li><strong>Source Images:</strong> Uploaded images bypass the AI and map directly to characters based on contrast.</li>
+                <li><strong>Color:</strong> Toggle between classic monochrome and full-color HTML output.</li>
             </ul>
             <button id="close-intro" class="btn white-btn">Got it</button>
         </div>
     </div>
 
-    <!-- Support / Donate Modal -->
-    <div id="donate-modal" class="modal hidden">
-        <div class="modal-content donate-content">
-            <h2>❤️ Support ASCII Studio</h2>
-            <p class="subheading">This tool is free and open-source.</p>
-            <p>If you find it useful, consider supporting the developer.</p>
-            <div style="margin-top: 24px; display: flex; flex-direction: column; gap: 12px;">
-                <a href="https://www.paypal.com/donate/?hosted_button_id=E5ZY9CWMAV9Z6" class="btn white-btn">Donate via PayPal</a>
-                <button id="close-donate" class="btn ghost">Maybe Later</button>
+    <!-- OmniFeed Style Donate Modal -->
+    <div id="donate-modal" class="modal donate-overlay hidden">
+        <div class="donate-window">
+            <div class="donate-header">
+                <div class="donate-dots">
+                    <span></span><span></span><span></span>
+                </div>
+                <button id="close-donate" class="donate-close">&times;</button>
+            </div>
+            <div class="donate-body">
+                <div class="donate-title">Donate to</div>
+                <div class="donate-name">Matt | CS Tech Solutions</div>
+                <div class="donate-desc">Empower progress by supporting our online community tool development.</div>
+                
+                <a href="https://www.paypal.com/donate/?hosted_button_id=E5ZY9CWMAV9Z6" target="_blank" class="donate-button btn-paypal">
+                    <i>PayPal</i> Donate
+                </a>
+                <button class="donate-button btn-venmo">
+                    <i>venmo</i> Donate
+                </button>
+                <button class="donate-button btn-outline">
+                    Donate with Debit or Credit Card
+                </button>
             </div>
         </div>
     </div>

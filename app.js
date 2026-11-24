@@ -9,13 +9,13 @@ document.addEventListener('DOMContentLoaded', () => {
     const imageUpload = document.getElementById('image-upload');
     const dropContent = document.getElementById('drop-content');
     const ratioBtns = document.querySelectorAll('.ratio-btn');
+    const colorBtns = document.querySelectorAll('.color-btn');
     
     // Actions
     const generateBtn = document.getElementById('generate-btn');
     const resetBtn = document.getElementById('reset-btn');
-    const exportText = document.getElementById('export-text');
     const exportPng = document.getElementById('export-png');
-    const asciiOutput = document.getElementById('ascii-output');
+    const asciiOutputContainer = document.getElementById('ascii-output-container');
     
     // Modals
     const introModal = document.getElementById('intro-modal');
@@ -51,10 +51,16 @@ document.addEventListener('DOMContentLoaded', () => {
         donateModal.classList.add('hidden');
     });
 
-    // ----- Aspect Ratio Selection -----
+    // ----- Aspect Ratio & Color Selection -----
     ratioBtns.forEach(btn => {
         btn.addEventListener('click', () => {
             ratioBtns.forEach(b => b.classList.remove('active'));
+            btn.classList.add('active');
+        });
+    });
+    colorBtns.forEach(btn => {
+        btn.addEventListener('click', () => {
+            colorBtns.forEach(b => b.classList.remove('active'));
             btn.classList.add('active');
         });
     });
@@ -99,12 +105,14 @@ document.addEventListener('DOMContentLoaded', () => {
         dropContent.innerHTML = `<span class="drop-title">Click to upload or drag & drop</span><span class="drop-sub">Converts image to digital character art<br>(PNG, JPG up to 10MB)</span>`;
         promptInput.disabled = false;
         promptInput.placeholder = "Describe a complex scene, object, or concept (e.g., 'a truck hauling a christmas tree')...";
+        asciiOutputContainer.innerHTML = ''; // clear previous
     });
 
     // ----- Main Generation Action -----
     generateBtn.addEventListener('click', async () => {
         const prompt = promptInput.value.trim();
         const ratioStr = document.querySelector('.ratio-btn.active').dataset.ratio;
+        const colorMode = document.querySelector('.color-btn.active').dataset.color; // "mono" or "color"
 
         if (!currentImage && !prompt) {
             alert("Please enter a prompt or upload an image.");
@@ -112,15 +120,14 @@ document.addEventListener('DOMContentLoaded', () => {
         }
 
         loadingModal.classList.remove('hidden');
-        
         await new Promise(r => setTimeout(r, 100));
 
         try {
             const canvas = document.getElementById('render-canvas');
             const ctx = canvas.getContext('2d', { willReadFrequently: true });
             
-            // We increase column count slightly to allow more detail for complex images
-            const cols = 140; 
+            // Generate at high resolution, but map carefully to ascii blocks
+            const cols = 160; 
             const [ratioW, ratioH] = ratioStr.split(':').map(Number);
             const rows = Math.round((cols * 0.5 * ratioH) / ratioW);
             
@@ -133,19 +140,26 @@ document.addEventListener('DOMContentLoaded', () => {
                 await new Promise(r => setTimeout(r, 50));
                 
                 renderImageToCanvas(ctx, currentImage, cols, rows);
-                convertCanvasToAscii(ctx, cols, rows);
+                convertCanvasToAscii(ctx, cols, rows, colorMode);
             } else {
                 loadingText.innerText = "Generating AI Scene...";
                 loadingSubtext.innerText = "Visualizing prompt (this may take a moment)";
                 
-                // Fetch AI Image from Pollinations
-                // We append styling text so the AI produces an image that converts well to ASCII
-                const enhancedPrompt = prompt + ", graphic novel style, high contrast, clean shapes, black and white";
-                const imgUrl = `https://image.pollinations.ai/prompt/${encodeURIComponent(enhancedPrompt)}?width=${cols*8}&height=${rows*8}&nologo=true`;
+                // Instruct Pollinations AI based on mode
+                let enhancedPrompt = prompt;
+                if (colorMode === "mono") {
+                    enhancedPrompt += ", high contrast black and white, graphic novel, clean silhouette, digital art";
+                } else {
+                    enhancedPrompt += ", vibrant colors, high contrast, digital art, distinct shapes";
+                }
+                
+                // Use a seed to avoid caching issues on the same prompt
+                const seed = Math.floor(Math.random() * 1000000);
+                const imgUrl = `https://image.pollinations.ai/prompt/${encodeURIComponent(enhancedPrompt)}?width=${cols*4}&height=${rows*4}&nologo=true&seed=${seed}`;
                 
                 await new Promise((resolve, reject) => {
                     const img = new Image();
-                    img.crossOrigin = "Anonymous"; // Required to read pixels back from the canvas
+                    img.crossOrigin = "Anonymous";
                     img.onload = () => {
                         renderImageToCanvas(ctx, img, cols, rows);
                         resolve();
@@ -154,7 +168,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     img.src = imgUrl;
                 });
                 
-                convertCanvasToAscii(ctx, cols, rows);
+                convertCanvasToAscii(ctx, cols, rows, colorMode);
             }
 
             setupView.classList.add('hidden');
@@ -172,9 +186,7 @@ document.addEventListener('DOMContentLoaded', () => {
     function renderImageToCanvas(ctx, img, cols, rows) {
         ctx.fillStyle = "black";
         ctx.fillRect(0, 0, cols, rows);
-        
-        // Scale to fit completely
-        const scale = Math.min(cols / img.width, rows / img.height);
+        const scale = Math.max(cols / img.width, rows / img.height); // Cover fill
         const w = img.width * scale;
         const h = img.height * scale;
         const x = (cols - w) / 2;
@@ -182,13 +194,13 @@ document.addEventListener('DOMContentLoaded', () => {
         ctx.drawImage(img, x, y, w, h);
     }
 
-    function convertCanvasToAscii(ctx, cols, rows) {
+    function convertCanvasToAscii(ctx, cols, rows, colorMode) {
         const ramp = " .:-=+*#%@";
         const imgData = ctx.getImageData(0, 0, cols, rows).data;
         
-        let output = '';
+        let htmlOutput = "";
+        
         for (let y = 0; y < rows; y++) {
-            let rowStr = '';
             for (let x = 0; x < cols; x++) {
                 const offset = (y * cols + x) * 4;
                 const r = imgData[offset];
@@ -197,47 +209,67 @@ document.addEventListener('DOMContentLoaded', () => {
                 
                 let brightness = (0.299*r + 0.587*g + 0.114*b);
                 
-                // Enhance contrast to make details pop
+                // Increase contrast to preserve distinct edges
                 brightness = ((brightness / 255 - 0.5) * 1.5 + 0.5) * 255;
                 brightness = Math.max(0, Math.min(255, brightness));
 
                 const charIdx = Math.floor((brightness / 255) * (ramp.length - 1));
-                rowStr += ramp[charIdx];
+                const char = ramp[charIdx];
+                
+                // Prevent HTML injection by safely handling spaces
+                const displayChar = (char === ' ') ? '&nbsp;' : char;
+
+                if (colorMode === "color") {
+                    htmlOutput += `<span style="color: rgb(${r},${g},${b});">${displayChar}</span>`;
+                } else {
+                    htmlOutput += `<span style="color: #FFFFFF;">${displayChar}</span>`;
+                }
             }
-            output += rowStr + '\n';
+            htmlOutput += '<br>';
         }
-        asciiOutput.innerText = output;
+        
+        asciiOutputContainer.innerHTML = htmlOutput;
     }
 
-    // ----- Exports -----
-    exportText.addEventListener('click', () => {
-        navigator.clipboard.writeText(asciiOutput.innerText).then(() => {
-            const orig = exportText.innerText;
-            exportText.innerText = "Copied!";
-            setTimeout(() => exportText.innerText = orig, 2000);
-        });
-    });
-
+    // ----- Export Action -----
     exportPng.addEventListener('click', () => {
-        const rows = asciiOutput.innerText.split('\n');
-        const canvas = document.createElement('canvas');
-        const ctx = canvas.getContext('2d');
-        
         const charW = 6;
         const charH = 10;
         
-        canvas.width = rows[0].length * charW + 40; 
-        canvas.height = (rows.length - 1) * charH + 40;
+        // Find dimensions based on child nodes
+        const lines = asciiOutputContainer.innerHTML.split('<br>');
+        // Remove trailing empty split
+        if (lines[lines.length - 1] === '') lines.pop();
+
+        const canvas = document.createElement('canvas');
+        const ctx = canvas.getContext('2d');
+        
+        // Parse the first line to get column count
+        const tempDiv = document.createElement('div');
+        tempDiv.innerHTML = lines[0];
+        const cols = tempDiv.childNodes.length;
+        const rows = lines.length;
+        
+        canvas.width = cols * charW + 40; 
+        canvas.height = rows * charH + 40;
         
         ctx.fillStyle = "#0F0F0F";
         ctx.fillRect(0, 0, canvas.width, canvas.height);
         
-        ctx.fillStyle = "#FFFFFF";
         ctx.font = `${charH}px monospace`;
         ctx.textBaseline = "top";
         
-        rows.forEach((row, idx) => {
-            ctx.fillText(row, 20, 20 + (idx * charH));
+        lines.forEach((lineHtml, rowIdx) => {
+            tempDiv.innerHTML = lineHtml;
+            Array.from(tempDiv.childNodes).forEach((span, colIdx) => {
+                ctx.fillStyle = span.style.color || "#FFFFFF";
+                // decode html entities like &nbsp;
+                let char = span.innerText || span.textContent;
+                if (char.length > 1 && char.charCodeAt(0) === 160) {
+                    char = " ";
+                }
+                ctx.fillText(char, 20 + (colIdx * charW), 20 + (rowIdx * charH));
+            });
         });
         
         const link = document.createElement('a');

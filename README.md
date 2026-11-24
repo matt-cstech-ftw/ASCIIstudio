@@ -1,6 +1,6 @@
-# ASCII Studio (V6)
+# ASCII Studio (V7)
 
-A free, keyless AI integration that generates complex scenes (like a truck hauling a christmas tree) via the Pollinations API, rendering the result into high-resolution ASCII.
+A client-side ASCII generator that handles highly complex image generation using Pollinations AI. Includes a toggle for B&W vs Full-Color rendering, and features a replica of the OmniFeed donation modal.
 
 ## Deployment to GitHub Pages
 
@@ -9,7 +9,7 @@ A free, keyless AI integration that generates complex scenes (like a truck hauli
    ```bash
    git init
    git add .
-   git commit -m "Update: Integrated Pollinations API for complex text-to-image generation and restored in-window PayPal modal"
+   git commit -m "Update: Fixed prompt parameters, added color toggle, recreated exact donation modal"
    git branch -M main
    git remote add origin https://github.com/matt-cstech-ftw/ASCIIstudio.git
    git push -u origin main -f
