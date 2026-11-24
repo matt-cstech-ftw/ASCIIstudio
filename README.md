@@ -1,10 +1,6 @@
-# ASCII Studio (V3)
+# ASCII Studio (V4)
 
-A completely client-side PWA featuring a real Hugging Face AI pipeline (`Transformers.js`) running entirely in your browser. 
-
-* **No API Keys, No Server:** Downloads model weights (once) directly into the browser cache.
-* **Semantic AI Text-to-Procedural:** Uses `Xenova/all-MiniLM-L6-v2` to map prompts into 384-dimensional semantic vectors, driving a deterministic generative art canvas.
-* **Flawless Aspect Ratios:** Mathematically compensates for monospace font stretching.
+A fully functional, purely client-side PWA featuring a real Hugging Face AI pipeline (`Transformers.js`) running entirely in your browser. 
 
 ## Deployment to GitHub Pages
 
@@ -13,7 +9,7 @@ A completely client-side PWA featuring a real Hugging Face AI pipeline (`Transfo
    ```bash
    git init
    git add .
-   git commit -m "Update: Exact UI recreation and real Transformers.js AI integration"
+   git commit -m "Update: Added real-time loading modals and fixed semantic vector math"
    git branch -M main
    git remote add origin https://github.com/matt-cstech-ftw/ASCIIstudio.git
    git push -u origin main -f
