@@ -6,107 +6,91 @@
     <title>ASCII Studio</title>
     <link rel="stylesheet" href="style.css">
     <link rel="manifest" href="manifest.json">
-    <meta name="theme-color" content="#000000">
+    <meta name="theme-color" content="#080808">
 </head>
 <body>
     <header class="app-header">
         <div class="logo">
-            <img src="assets/logo.svg" alt="ASCII Studio Logo" class="logo-icon">
+            <div class="logo-icon">AS</div>
             <h1>ASCII<span>STUDIO</span></h1>
         </div>
         <div class="header-actions">
-            <button id="help-btn" class="utility-btn">Need Help?</button>
-            <button id="donate-btn" class="utility-btn heart-btn">❤️ Support</button>
+            <a href="#" id="help-btn" class="utility-link">Need Help?</a>
+            <a href="https://www.paypal.com/donate/?hosted_button_id=E5ZY9CWMAV9Z6" target="_blank" class="support-btn">Support ❤️</a>
         </div>
     </header>
 
-    <main class="workspace">
-        <aside class="controls">
-            <section class="control-group">
-                <h2>Input</h2>
-                <textarea id="prompt-input" placeholder="Type a prompt (e.g. 'retro lighthouse', 'skull', 'cat')..."></textarea>
-                <div class="upload-wrapper">
-                    <button id="upload-btn" class="btn secondary">Upload Image</button>
-                    <button id="clear-image-btn" class="btn ghost hidden">Clear Image</button>
+    <main class="main-container">
+        
+        <!-- Input Form -->
+        <div id="setup-view">
+            <div class="section">
+                <label>CREATION PROMPT</label>
+                <textarea id="prompt-input" placeholder="Describe a scene, object, or feeling to generate procedural ASCII art..."></textarea>
+            </div>
+
+            <div class="section-divider">OR USE SOURCE IMAGE</div>
+
+            <div class="section">
+                <div class="drop-zone" id="drop-zone">
                     <input type="file" id="image-upload" accept="image/png, image/jpeg, image/webp" hidden>
+                    <div class="drop-content" id="drop-content">
+                        <span class="drop-title">Click to upload or drag & drop</span>
+                        <span class="drop-sub">Converts image to digital character art<br>(PNG, JPG up to 10MB)</span>
+                    </div>
                 </div>
-            </section>
+            </div>
 
-            <section class="control-group">
-                <h2>Aspect Ratio</h2>
-                <div class="ratio-selector">
-                    <button class="ratio-btn active" data-ratio="16:9">
-                        <span class="glyph w169"></span> 16:9
-                    </button>
-                    <button class="ratio-btn" data-ratio="1:1">
-                        <span class="glyph w11"></span> 1:1
-                    </button>
-                    <button class="ratio-btn" data-ratio="9:16">
-                        <span class="glyph w916"></span> 9:16
-                    </button>
+            <div class="section">
+                <label>ASPECT RATIO</label>
+                <div class="ratio-group">
+                    <button class="ratio-btn active" data-ratio="16:9">16:9 <span class="glyph w169"></span></button>
+                    <button class="ratio-btn" data-ratio="9:16">9:16 <span class="glyph w916"></span></button>
+                    <button class="ratio-btn" data-ratio="1:1">1:1 <span class="glyph w11"></span></button>
                 </div>
-            </section>
+            </div>
+
+            <button id="generate-btn" class="generate-btn">GENERATE</button>
+            <div id="ai-status" class="ai-status hidden">Initializing AI Engine...</div>
+        </div>
+
+        <!-- Output Result -->
+        <div id="result-view" class="hidden">
+            <div class="result-header">
+                <label>GENERATED ASCII ART</label>
+                <button id="reset-btn" class="reset-btn">← New Generation</button>
+            </div>
             
-            <section class="control-group">
-                <h2>Settings</h2>
-                <label>Style Ramp</label>
-                <select id="ramp-select">
-                    <option value="standard">Standard ASCII</option>
-                    <option value="blocks">Density Blocks</option>
-                    <option value="binary">Binary (01)</option>
-                    <option value="letters">Alpha (A-Z)</option>
-                </select>
-                
-                <label>Contrast</label>
-                <input type="range" id="contrast" min="0" max="200" value="100">
-                
-                <label>Animation Loop</label>
-                <select id="anim-select">
-                    <option value="none">Static</option>
-                    <option value="scanline">Scanline Sweep</option>
-                    <option value="flicker">Retro Flicker</option>
-                </select>
-            </section>
-
-            <button id="generate-btn" class="btn primary">Generate</button>
-        </aside>
-
-        <section class="preview-stage">
-            <div id="canvas-container">
+            <div class="canvas-wrapper">
+                <!-- We keep a hidden canvas to do the math/rendering -->
+                <canvas id="render-canvas" hidden></canvas>
+                <!-- The actual output shown to user -->
                 <pre id="ascii-output"></pre>
             </div>
+
             <div class="export-actions">
                 <button id="export-text" class="btn ghost">Copy Text</button>
+                <button id="export-png" class="btn ghost">Save PNG</button>
             </div>
-        </section>
+        </div>
+
     </main>
 
-    <!-- Welcome / Help Modal -->
+    <!-- Help Modal -->
     <div id="help-modal" class="modal hidden">
         <div class="modal-content">
-            <h2>Welcome to ASCII Studio</h2>
-            <p class="subheading">Your client-side generator for text-art, digital styles, and looping GIFs.</p>
+            <h2>ASCII Studio Workflow</h2>
+            <p class="subheading">How the client-side engine works:</p>
             <ul>
-                <li><strong>Prompts:</strong> Enter keywords (like "cat", "skull", "storm", "alien") to generate visual scenes.</li>
-                <li><strong>Images:</strong> Upload photos to convert them into stylized ASCII instantly.</li>
-                <li><strong>Live Tweaks:</strong> Adjust contrast and character blocks in real time.</li>
-                <li><strong>Privacy:</strong> The rendering engine runs 100% locally in your browser using Canvas pixel mapping.</li>
+                <li><strong>AI Prompts:</strong> This app downloads a real Hugging Face embedding model (Transformers.js) into your browser on first run. It semantically maps your prompt to an abstract procedural generation, completely offline.</li>
+                <li><strong>Source Images:</strong> Uploaded images bypass the AI and are perfectly pixel-mapped to ASCII blocks based on contrast and luminance.</li>
+                <li><strong>Aspect Ratios:</strong> The generator automatically scales grid rows to compensate for the vertical height of monospace fonts, keeping your output undistorted.</li>
             </ul>
-            <button id="close-help" class="btn primary">Got it</button>
+            <button id="close-help" class="btn white-btn">Got it</button>
         </div>
     </div>
 
-    <!-- Donate Modal -->
-    <div id="donate-modal" class="modal hidden">
-        <div class="modal-content donate-content">
-            <h2>❤️ Support ASCII Studio</h2>
-            <p class="subheading">This tool is free and open-source.</p>
-            <p>If you find it useful, consider supporting the developer.</p>
-            <a href="https://www.paypal.com/donate/?hosted_button_id=E5ZY9CWMAV9Z6" target="_blank" class="btn primary donate-link">Donate via PayPal</a>
-            <button id="close-donate" class="btn ghost">Maybe Later</button>
-        </div>
-    </div>
-
-    <script src="app.js"></script>
+    <!-- Transformers.js module -->
+    <script type="module" src="app.js"></script>
 </body>
 </html>
