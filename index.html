@@ -24,9 +24,10 @@
         <aside class="controls">
             <section class="control-group">
                 <h2>Input</h2>
-                <textarea id="prompt-input" placeholder="Type a prompt (e.g. 'retro lighthouse in a storm')..."></textarea>
+                <textarea id="prompt-input" placeholder="Type a prompt (e.g. 'retro lighthouse', 'skull', 'cat')..."></textarea>
                 <div class="upload-wrapper">
                     <button id="upload-btn" class="btn secondary">Upload Image</button>
+                    <button id="clear-image-btn" class="btn ghost hidden">Clear Image</button>
                     <input type="file" id="image-upload" accept="image/png, image/jpeg, image/webp" hidden>
                 </div>
             </section>
@@ -53,6 +54,7 @@
                     <option value="standard">Standard ASCII</option>
                     <option value="blocks">Density Blocks</option>
                     <option value="binary">Binary (01)</option>
+                    <option value="letters">Alpha (A-Z)</option>
                 </select>
                 
                 <label>Contrast</label>
@@ -71,13 +73,10 @@
 
         <section class="preview-stage">
             <div id="canvas-container">
-                <canvas id="render-canvas"></canvas>
                 <pre id="ascii-output"></pre>
             </div>
             <div class="export-actions">
                 <button id="export-text" class="btn ghost">Copy Text</button>
-                <button id="export-png" class="btn ghost">Save PNG</button>
-                <button id="export-gif" class="btn ghost">Save GIF</button>
             </div>
         </section>
     </main>
@@ -88,10 +87,10 @@
             <h2>Welcome to ASCII Studio</h2>
             <p class="subheading">Your client-side generator for text-art, digital styles, and looping GIFs.</p>
             <ul>
-                <li><strong>Prompts:</strong> Enter text to generate algorithmic scenes.</li>
-                <li><strong>Images:</strong> Upload photos to convert them into stylized ASCII.</li>
-                <li><strong>Export:</strong> Save your art as static PNGs, looping GIFs, or raw text.</li>
-                <li><strong>Privacy:</strong> Everything runs 100% locally in your browser.</li>
+                <li><strong>Prompts:</strong> Enter keywords (like "cat", "skull", "storm", "alien") to generate visual scenes.</li>
+                <li><strong>Images:</strong> Upload photos to convert them into stylized ASCII instantly.</li>
+                <li><strong>Live Tweaks:</strong> Adjust contrast and character blocks in real time.</li>
+                <li><strong>Privacy:</strong> The rendering engine runs 100% locally in your browser using Canvas pixel mapping.</li>
             </ul>
             <button id="close-help" class="btn primary">Got it</button>
         </div>

@@ -12,7 +12,7 @@ A purely client-side PWA for generating ASCII art, digital-style filters, and lo
    ```bash
    git init
    git add .
-   git commit -m "Initial commit: ASCII Studio PWA UI Setup"
+   git commit -m "Update: Added real client-side canvas rendering engine"
    git branch -M main
    git remote add origin https://github.com/matt-cstech-ftw/ASCIIstudio.git
    git push -u origin main
