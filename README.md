@@ -1,4 +1,4 @@
-# ASCII Studio (V4)
+# ASCII Studio (V5)
 
 A fully functional, purely client-side PWA featuring a real Hugging Face AI pipeline (`Transformers.js`) running entirely in your browser. 
 
@@ -9,7 +9,7 @@ A fully functional, purely client-side PWA featuring a real Hugging Face AI pipe
    ```bash
    git init
    git add .
-   git commit -m "Update: Added real-time loading modals and fixed semantic vector math"
+   git commit -m "Update: Implemented semantic similarity shape rendering"
    git branch -M main
    git remote add origin https://github.com/matt-cstech-ftw/ASCIIstudio.git
    git push -u origin main -f

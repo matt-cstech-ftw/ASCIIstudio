@@ -1,4 +1,4 @@
-const CACHE_NAME = 'ascii-studio-v4';
+const CACHE_NAME = 'ascii-studio-v5';
 const ASSETS = [
     './',
     './index.html',

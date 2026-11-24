@@ -35,7 +35,6 @@ document.addEventListener('DOMContentLoaded', () => {
     let aiPipeline = null;
 
     // ----- Modal Controls -----
-    // Show intro modal on first visit or via Help button
     if (!localStorage.getItem('asciiStudioWelcome')) {
         introModal.classList.remove('hidden');
     }
@@ -58,28 +57,15 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // ----- Drag & Drop Image Handling -----
     dropZone.addEventListener('click', () => imageUpload.click());
-    
-    dropZone.addEventListener('dragover', (e) => {
-        e.preventDefault();
-        dropZone.classList.add('dragover');
-    });
-    
-    dropZone.addEventListener('dragleave', () => {
-        dropZone.classList.remove('dragover');
-    });
-    
+    dropZone.addEventListener('dragover', (e) => { e.preventDefault(); dropZone.classList.add('dragover'); });
+    dropZone.addEventListener('dragleave', () => dropZone.classList.remove('dragover'));
     dropZone.addEventListener('drop', (e) => {
         e.preventDefault();
         dropZone.classList.remove('dragover');
-        if (e.dataTransfer.files && e.dataTransfer.files[0]) {
-            handleImageFile(e.dataTransfer.files[0]);
-        }
+        if (e.dataTransfer.files && e.dataTransfer.files[0]) handleImageFile(e.dataTransfer.files[0]);
     });
-
     imageUpload.addEventListener('change', (e) => {
-        if(e.target.files && e.target.files[0]) {
-            handleImageFile(e.target.files[0]);
-        }
+        if(e.target.files && e.target.files[0]) handleImageFile(e.target.files[0]);
     });
 
     function handleImageFile(file) {
@@ -111,7 +97,34 @@ document.addEventListener('DOMContentLoaded', () => {
         promptInput.placeholder = "Describe a scene, object, or feeling to generate procedural ASCII art...";
     });
 
-    // ----- AI Initialization (Transformers.js) -----
+    // ----- Emoji / Object Mapping (Deterministic Render) -----
+    // Because mapping an abstract 384D math vector into perfect geometric shapes often results in 
+    // abstract blobs (as seen in the screenshots), we instead use the AI to semantically match 
+    // the user's prompt against a library of recognizable core emojis/shapes, which are then rendered clearly.
+    const shapeDictionary = [
+        { word: "cat", char: "🐱" },
+        { word: "dog", char: "🐶" },
+        { word: "bird", char: "🦅" },
+        { word: "fire", char: "🔥" },
+        { word: "flame", char: "🔥" },
+        { word: "water", char: "💧" },
+        { word: "storm", char: "⚡" },
+        { word: "skull", char: "💀" },
+        { word: "alien", char: "👽" },
+        { word: "robot", char: "🤖" },
+        { word: "heart", char: "❤️" },
+        { word: "star", char: "⭐" },
+        { word: "moon", char: "🌙" },
+        { word: "sun", char: "☀️" },
+        { word: "tree", char: "🌲" },
+        { word: "car", char: "🚗" },
+        { word: "house", char: "🏠" },
+        { word: "ghost", char: "👻" },
+        { word: "sword", char: "🗡️" },
+        { word: "flower", char: "🌺" }
+    ];
+
+    // ----- AI Initialization -----
     async function getAI() {
         if (!aiPipeline) {
             loadingText.innerText = "Downloading AI Model...";
@@ -133,9 +146,21 @@ document.addEventListener('DOMContentLoaded', () => {
         return aiPipeline;
     }
 
+    // Helper: Compute cosine similarity between two vectors
+    function cosineSimilarity(vecA, vecB) {
+        let dotProduct = 0, normA = 0, normB = 0;
+        for (let i = 0; i < vecA.length; i++) {
+            dotProduct += vecA[i] * vecB[i];
+            normA += vecA[i] * vecA[i];
+            normB += vecB[i] * vecB[i];
+        }
+        if (normA === 0 || normB === 0) return 0;
+        return dotProduct / (Math.sqrt(normA) * Math.sqrt(normB));
+    }
+
     // ----- Main Generation Action -----
     generateBtn.addEventListener('click', async () => {
-        const prompt = promptInput.value.trim();
+        const prompt = promptInput.value.trim().toLowerCase();
         const ratioStr = document.querySelector('.ratio-btn.active').dataset.ratio;
 
         if (!currentImage && !prompt) {
@@ -143,16 +168,13 @@ document.addEventListener('DOMContentLoaded', () => {
             return;
         }
 
-        // Show Full-Screen Loading Modal immediately
         loadingModal.classList.remove('hidden');
         loadingText.innerText = "Initializing Engine...";
         loadingSubtext.innerText = "Please wait.";
         
-        // Yield to browser to paint the modal before heavy sync/async tasks
         await new Promise(r => setTimeout(r, 100));
 
         try {
-            // Setup hidden canvas
             const canvas = document.getElementById('render-canvas');
             const ctx = canvas.getContext('2d', { willReadFrequently: true });
             
@@ -172,25 +194,45 @@ document.addEventListener('DOMContentLoaded', () => {
                 renderImageToCanvas(ctx, currentImage, cols, rows);
                 convertCanvasToAscii(ctx, cols, rows);
             } else {
-                // We need the AI model
                 const extractor = await getAI();
                 
                 loadingText.innerText = "Analyzing Prompt...";
-                loadingSubtext.innerText = "Extracting semantic vectors";
+                loadingSubtext.innerText = "Running semantic matching";
                 await new Promise(r => setTimeout(r, 50));
                 
-                const output = await extractor(prompt, { pooling: 'mean', normalize: true });
-                const vector = Array.from(output.data);
+                // Get embedding for user prompt
+                const promptOutput = await extractor(prompt, { pooling: 'mean', normalize: true });
+                const promptVector = Array.from(promptOutput.data);
+                
+                // Find the best semantic match in our dictionary
+                let bestMatch = shapeDictionary[0].char;
+                let highestSim = -1;
+                
+                // Fast naive check first (if user literally typed "cat")
+                const exactMatch = shapeDictionary.find(s => prompt.includes(s.word));
+                if (exactMatch) {
+                    bestMatch = exactMatch.char;
+                } else {
+                    // Semantic check for abstract concepts
+                    for (const item of shapeDictionary) {
+                        const itemOutput = await extractor(item.word, { pooling: 'mean', normalize: true });
+                        const itemVector = Array.from(itemOutput.data);
+                        const sim = cosineSimilarity(promptVector, itemVector);
+                        if (sim > highestSim) {
+                            highestSim = sim;
+                            bestMatch = item.char;
+                        }
+                    }
+                }
                 
                 loadingText.innerText = "Rendering Scene...";
-                loadingSubtext.innerText = "Generating structural art";
+                loadingSubtext.innerText = "Mapping shape to ASCII";
                 await new Promise(r => setTimeout(r, 50));
 
-                drawAIProceduralScene(ctx, vector, cols, rows);
+                drawSemanticShape(ctx, bestMatch, cols, rows);
                 convertCanvasToAscii(ctx, cols, rows);
             }
 
-            // Hide Setup, Show Results
             setupView.classList.add('hidden');
             resultView.classList.remove('hidden');
 
@@ -198,7 +240,6 @@ document.addEventListener('DOMContentLoaded', () => {
             console.error(err);
             alert("An error occurred during generation: " + err.message);
         } finally {
-            // Guarantee the loading modal goes away
             loadingModal.classList.add('hidden');
         }
     });
@@ -207,8 +248,6 @@ document.addEventListener('DOMContentLoaded', () => {
     function renderImageToCanvas(ctx, img, cols, rows) {
         ctx.fillStyle = "black";
         ctx.fillRect(0, 0, cols, rows);
-        
-        // Scale to fit and center
         const scale = Math.min(cols / img.width, rows / img.height);
         const w = img.width * scale;
         const h = img.height * scale;
@@ -217,53 +256,26 @@ document.addEventListener('DOMContentLoaded', () => {
         ctx.drawImage(img, x, y, w, h);
     }
 
-    function drawAIProceduralScene(ctx, vector, w, h) {
+    function drawSemanticShape(ctx, char, w, h) {
         ctx.fillStyle = "black";
         ctx.fillRect(0, 0, w, h);
-
-        // Normalize vector to guarantee bright/visible shapes (prevents a black screen)
-        let maxVal = Math.max(...vector.map(Math.abs));
-        if (maxVal === 0) maxVal = 1;
-        let nv = vector.map(v => Math.abs(v) / maxVal); // 0.0 to 1.0
-
-        // Background Gradient
-        const grad = ctx.createLinearGradient(0, 0, 0, h);
-        grad.addColorStop(0, `rgb(${Math.floor(nv[0]*255)}, ${Math.floor(nv[1]*255)}, ${Math.floor(nv[2]*255)})`);
-        grad.addColorStop(1, "black");
-        ctx.fillStyle = grad;
-        ctx.fillRect(0, 0, w, h);
-
-        // Draw structural shapes based on the semantic vector
-        for(let i = 10; i < 70; i += 5) {
-            let cx = nv[i] * w;
-            let cy = nv[i+1] * h;
-            let size = nv[i+2] * (w * 0.4); 
-            let intensity = Math.floor(nv[i+3] * 255);
-            let shapeType = Math.floor(nv[i+4] * 3); // 0, 1, or 2
-
-            // High contrast fills
-            ctx.fillStyle = `rgba(${intensity}, ${intensity}, ${intensity}, 0.8)`;
-            
-            ctx.beginPath();
-            if (shapeType === 0) {
-                // Circle
-                ctx.arc(cx, cy, size/2, 0, Math.PI*2);
-            } else if (shapeType === 1) {
-                // Rectangle
-                ctx.rect(cx - size/2, cy - size/2, size, size);
-            } else {
-                // Triangle
-                ctx.moveTo(cx, cy - size/2);
-                ctx.lineTo(cx + size/2, cy + size/2);
-                ctx.lineTo(cx - size/2, cy + size/2);
-                ctx.closePath();
-            }
-            ctx.fill();
-        }
+        
+        ctx.fillStyle = "white";
+        ctx.textAlign = "center";
+        ctx.textBaseline = "middle";
+        
+        // Draw the matched emoji/character as a massive silhouette
+        // This ensures a highly recognizable shape instead of abstract blobs
+        const fontSize = Math.min(w, h) * 0.9;
+        ctx.font = `${fontSize}px Arial, sans-serif`;
+        
+        // Slightly offset vertically to account for emoji baseline quirks
+        ctx.fillText(char, w/2, h/2 + (h*0.1));
     }
 
     function convertCanvasToAscii(ctx, cols, rows) {
-        const ramp = " .:-=+*#%@"; // 10 levels, dark to light
+        // High density character ramp
+        const ramp = " .:-=+*#%@";
         const imgData = ctx.getImageData(0, 0, cols, rows).data;
         
         let output = '';
@@ -275,11 +287,10 @@ document.addEventListener('DOMContentLoaded', () => {
                 const g = imgData[offset+1];
                 const b = imgData[offset+2];
                 
-                // Standard perceived luminance
                 let brightness = (0.299*r + 0.587*g + 0.114*b);
                 
-                // Boost contrast slightly
-                brightness = ((brightness / 255 - 0.5) * 1.5 + 0.5) * 255;
+                // Boost contrast drastically to ensure the shape pops
+                brightness = ((brightness / 255 - 0.5) * 2.0 + 0.5) * 255;
                 brightness = Math.max(0, Math.min(255, brightness));
 
                 const charIdx = Math.floor((brightness / 255) * (ramp.length - 1));
@@ -304,11 +315,10 @@ document.addEventListener('DOMContentLoaded', () => {
         const canvas = document.createElement('canvas');
         const ctx = canvas.getContext('2d');
         
-        // Monospace dimensions
         const charW = 6;
         const charH = 10;
         
-        canvas.width = rows[0].length * charW + 40; // padding
+        canvas.width = rows[0].length * charW + 40; 
         canvas.height = (rows.length - 1) * charH + 40;
         
         ctx.fillStyle = "#0F0F0F";

@@ -61,9 +61,7 @@
             </div>
             
             <div class="canvas-wrapper">
-                <!-- We keep a hidden canvas to do the math/rendering -->
                 <canvas id="render-canvas" hidden></canvas>
-                <!-- The actual output shown to user -->
                 <pre id="ascii-output"></pre>
             </div>
 
@@ -81,7 +79,7 @@
             <h2>Welcome to ASCII Studio</h2>
             <p class="subheading">Your client-side generator for text-art & digital styles.</p>
             <ul>
-                <li><strong>AI Prompts:</strong> Type a prompt to generate art. On your first run, the app will download a real Hugging Face model (Transformers.js) into your browser to process prompts completely offline.</li>
+                <li><strong>AI Prompts:</strong> Type a prompt to generate art. The app will download a Hugging Face model into your browser to process prompts offline.</li>
                 <li><strong>Source Images:</strong> Uploaded images bypass the AI and are perfectly pixel-mapped to ASCII blocks based on contrast.</li>
                 <li><strong>Privacy:</strong> Everything runs 100% locally in your browser.</li>
             </ul>
@@ -93,12 +91,11 @@
     <div id="loading-modal" class="modal hidden">
         <div class="modal-content loading-content">
             <div class="spinner"></div>
-            <h2 id="loading-text">Initializing AI Engine...</h2>
+            <h2 id="loading-text">Initializing Engine...</h2>
             <p id="loading-subtext" class="subheading">Please wait.</p>
         </div>
     </div>
 
-    <!-- Transformers.js module -->
     <script type="module" src="app.js"></script>
 </body>
 </html>
