@@ -1,9 +1,3 @@
-import { pipeline, env } from 'https://cdn.jsdelivr.net/npm/@xenova/transformers@2.17.0';
-
-// Configure Transformers.js for browser execution
-env.allowLocalModels = false;
-env.useBrowserCache = true;
-
 document.addEventListener('DOMContentLoaded', () => {
     // Views
     const setupView = document.getElementById('setup-view');
@@ -25,14 +19,17 @@ document.addEventListener('DOMContentLoaded', () => {
     
     // Modals
     const introModal = document.getElementById('intro-modal');
+    const donateModal = document.getElementById('donate-modal');
     const helpBtn = document.getElementById('help-btn');
+    const supportBtn = document.getElementById('support-btn');
     const closeIntro = document.getElementById('close-intro');
+    const closeDonate = document.getElementById('close-donate');
+    
     const loadingModal = document.getElementById('loading-modal');
     const loadingText = document.getElementById('loading-text');
     const loadingSubtext = document.getElementById('loading-subtext');
 
     let currentImage = null;
-    let aiPipeline = null;
 
     // ----- Modal Controls -----
     if (!localStorage.getItem('asciiStudioWelcome')) {
@@ -45,6 +42,13 @@ document.addEventListener('DOMContentLoaded', () => {
     helpBtn.addEventListener('click', (e) => { 
         e.preventDefault(); 
         introModal.classList.remove('hidden'); 
+    });
+    
+    supportBtn.addEventListener('click', () => {
+        donateModal.classList.remove('hidden');
+    });
+    closeDonate.addEventListener('click', () => {
+        donateModal.classList.add('hidden');
     });
 
     // ----- Aspect Ratio Selection -----
@@ -94,73 +98,12 @@ document.addEventListener('DOMContentLoaded', () => {
         dropZone.classList.remove('image-preview-active');
         dropContent.innerHTML = `<span class="drop-title">Click to upload or drag & drop</span><span class="drop-sub">Converts image to digital character art<br>(PNG, JPG up to 10MB)</span>`;
         promptInput.disabled = false;
-        promptInput.placeholder = "Describe a scene, object, or feeling to generate procedural ASCII art...";
+        promptInput.placeholder = "Describe a complex scene, object, or concept (e.g., 'a truck hauling a christmas tree')...";
     });
-
-    // ----- Emoji / Object Mapping (Deterministic Render) -----
-    // Because mapping an abstract 384D math vector into perfect geometric shapes often results in 
-    // abstract blobs (as seen in the screenshots), we instead use the AI to semantically match 
-    // the user's prompt against a library of recognizable core emojis/shapes, which are then rendered clearly.
-    const shapeDictionary = [
-        { word: "cat", char: "🐱" },
-        { word: "dog", char: "🐶" },
-        { word: "bird", char: "🦅" },
-        { word: "fire", char: "🔥" },
-        { word: "flame", char: "🔥" },
-        { word: "water", char: "💧" },
-        { word: "storm", char: "⚡" },
-        { word: "skull", char: "💀" },
-        { word: "alien", char: "👽" },
-        { word: "robot", char: "🤖" },
-        { word: "heart", char: "❤️" },
-        { word: "star", char: "⭐" },
-        { word: "moon", char: "🌙" },
-        { word: "sun", char: "☀️" },
-        { word: "tree", char: "🌲" },
-        { word: "car", char: "🚗" },
-        { word: "house", char: "🏠" },
-        { word: "ghost", char: "👻" },
-        { word: "sword", char: "🗡️" },
-        { word: "flower", char: "🌺" }
-    ];
-
-    // ----- AI Initialization -----
-    async function getAI() {
-        if (!aiPipeline) {
-            loadingText.innerText = "Downloading AI Model...";
-            loadingSubtext.innerText = "This happens once. About 22MB.";
-            
-            aiPipeline = await pipeline('feature-extraction', 'Xenova/all-MiniLM-L6-v2', {
-                progress_callback: (x) => {
-                    if (x.status === 'downloading') {
-                        let pct = Math.round((x.loaded / x.total) * 100);
-                        if (isNaN(pct) && x.progress) pct = Math.round(x.progress);
-                        loadingText.innerText = `Downloading Model (${pct || 0}%)`;
-                        loadingSubtext.innerText = `File: ${x.file}`;
-                    }
-                }
-            });
-            loadingText.innerText = "AI Engine Loaded";
-            loadingSubtext.innerText = "Initializing generation...";
-        }
-        return aiPipeline;
-    }
-
-    // Helper: Compute cosine similarity between two vectors
-    function cosineSimilarity(vecA, vecB) {
-        let dotProduct = 0, normA = 0, normB = 0;
-        for (let i = 0; i < vecA.length; i++) {
-            dotProduct += vecA[i] * vecB[i];
-            normA += vecA[i] * vecA[i];
-            normB += vecB[i] * vecB[i];
-        }
-        if (normA === 0 || normB === 0) return 0;
-        return dotProduct / (Math.sqrt(normA) * Math.sqrt(normB));
-    }
 
     // ----- Main Generation Action -----
     generateBtn.addEventListener('click', async () => {
-        const prompt = promptInput.value.trim().toLowerCase();
+        const prompt = promptInput.value.trim();
         const ratioStr = document.querySelector('.ratio-btn.active').dataset.ratio;
 
         if (!currentImage && !prompt) {
@@ -169,8 +112,6 @@ document.addEventListener('DOMContentLoaded', () => {
         }
 
         loadingModal.classList.remove('hidden');
-        loadingText.innerText = "Initializing Engine...";
-        loadingSubtext.innerText = "Please wait.";
         
         await new Promise(r => setTimeout(r, 100));
 
@@ -178,9 +119,9 @@ document.addEventListener('DOMContentLoaded', () => {
             const canvas = document.getElementById('render-canvas');
             const ctx = canvas.getContext('2d', { willReadFrequently: true });
             
-            // Grid Math: ASCII chars are ~0.5 aspect ratio (w/h).
+            // We increase column count slightly to allow more detail for complex images
+            const cols = 140; 
             const [ratioW, ratioH] = ratioStr.split(':').map(Number);
-            const cols = 120; // High resolution ASCII columns
             const rows = Math.round((cols * 0.5 * ratioH) / ratioW);
             
             canvas.width = cols;
@@ -194,42 +135,25 @@ document.addEventListener('DOMContentLoaded', () => {
                 renderImageToCanvas(ctx, currentImage, cols, rows);
                 convertCanvasToAscii(ctx, cols, rows);
             } else {
-                const extractor = await getAI();
+                loadingText.innerText = "Generating AI Scene...";
+                loadingSubtext.innerText = "Visualizing prompt (this may take a moment)";
                 
-                loadingText.innerText = "Analyzing Prompt...";
-                loadingSubtext.innerText = "Running semantic matching";
-                await new Promise(r => setTimeout(r, 50));
+                // Fetch AI Image from Pollinations
+                // We append styling text so the AI produces an image that converts well to ASCII
+                const enhancedPrompt = prompt + ", graphic novel style, high contrast, clean shapes, black and white";
+                const imgUrl = `https://image.pollinations.ai/prompt/${encodeURIComponent(enhancedPrompt)}?width=${cols*8}&height=${rows*8}&nologo=true`;
                 
-                // Get embedding for user prompt
-                const promptOutput = await extractor(prompt, { pooling: 'mean', normalize: true });
-                const promptVector = Array.from(promptOutput.data);
+                await new Promise((resolve, reject) => {
+                    const img = new Image();
+                    img.crossOrigin = "Anonymous"; // Required to read pixels back from the canvas
+                    img.onload = () => {
+                        renderImageToCanvas(ctx, img, cols, rows);
+                        resolve();
+                    };
+                    img.onerror = () => reject(new Error("Failed to generate AI image. Please try again."));
+                    img.src = imgUrl;
+                });
                 
-                // Find the best semantic match in our dictionary
-                let bestMatch = shapeDictionary[0].char;
-                let highestSim = -1;
-                
-                // Fast naive check first (if user literally typed "cat")
-                const exactMatch = shapeDictionary.find(s => prompt.includes(s.word));
-                if (exactMatch) {
-                    bestMatch = exactMatch.char;
-                } else {
-                    // Semantic check for abstract concepts
-                    for (const item of shapeDictionary) {
-                        const itemOutput = await extractor(item.word, { pooling: 'mean', normalize: true });
-                        const itemVector = Array.from(itemOutput.data);
-                        const sim = cosineSimilarity(promptVector, itemVector);
-                        if (sim > highestSim) {
-                            highestSim = sim;
-                            bestMatch = item.char;
-                        }
-                    }
-                }
-                
-                loadingText.innerText = "Rendering Scene...";
-                loadingSubtext.innerText = "Mapping shape to ASCII";
-                await new Promise(r => setTimeout(r, 50));
-
-                drawSemanticShape(ctx, bestMatch, cols, rows);
                 convertCanvasToAscii(ctx, cols, rows);
             }
 
@@ -248,6 +172,8 @@ document.addEventListener('DOMContentLoaded', () => {
     function renderImageToCanvas(ctx, img, cols, rows) {
         ctx.fillStyle = "black";
         ctx.fillRect(0, 0, cols, rows);
+        
+        // Scale to fit completely
         const scale = Math.min(cols / img.width, rows / img.height);
         const w = img.width * scale;
         const h = img.height * scale;
@@ -256,25 +182,7 @@ document.addEventListener('DOMContentLoaded', () => {
         ctx.drawImage(img, x, y, w, h);
     }
 
-    function drawSemanticShape(ctx, char, w, h) {
-        ctx.fillStyle = "black";
-        ctx.fillRect(0, 0, w, h);
-        
-        ctx.fillStyle = "white";
-        ctx.textAlign = "center";
-        ctx.textBaseline = "middle";
-        
-        // Draw the matched emoji/character as a massive silhouette
-        // This ensures a highly recognizable shape instead of abstract blobs
-        const fontSize = Math.min(w, h) * 0.9;
-        ctx.font = `${fontSize}px Arial, sans-serif`;
-        
-        // Slightly offset vertically to account for emoji baseline quirks
-        ctx.fillText(char, w/2, h/2 + (h*0.1));
-    }
-
     function convertCanvasToAscii(ctx, cols, rows) {
-        // High density character ramp
         const ramp = " .:-=+*#%@";
         const imgData = ctx.getImageData(0, 0, cols, rows).data;
         
@@ -289,8 +197,8 @@ document.addEventListener('DOMContentLoaded', () => {
                 
                 let brightness = (0.299*r + 0.587*g + 0.114*b);
                 
-                // Boost contrast drastically to ensure the shape pops
-                brightness = ((brightness / 255 - 0.5) * 2.0 + 0.5) * 255;
+                // Enhance contrast to make details pop
+                brightness = ((brightness / 255 - 0.5) * 1.5 + 0.5) * 255;
                 brightness = Math.max(0, Math.min(255, brightness));
 
                 const charIdx = Math.floor((brightness / 255) * (ramp.length - 1));

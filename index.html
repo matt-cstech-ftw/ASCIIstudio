@@ -16,7 +16,7 @@
         </div>
         <div class="header-actions">
             <a href="#" id="help-btn" class="utility-link">Need Help?</a>
-            <a href="https://www.paypal.com/donate/?hosted_button_id=E5ZY9CWMAV9Z6" target="_blank" class="support-btn">Support ❤️</a>
+            <button id="support-btn" class="support-btn">Support ❤️</button>
         </div>
     </header>
 
@@ -26,7 +26,7 @@
         <div id="setup-view">
             <div class="section">
                 <label>CREATION PROMPT</label>
-                <textarea id="prompt-input" placeholder="Describe a scene, object, or feeling to generate procedural ASCII art..."></textarea>
+                <textarea id="prompt-input" placeholder="Describe a complex scene, object, or concept (e.g., 'a truck hauling a christmas tree')..."></textarea>
             </div>
 
             <div class="section-divider">OR USE SOURCE IMAGE</div>
@@ -77,13 +77,26 @@
     <div id="intro-modal" class="modal hidden">
         <div class="modal-content">
             <h2>Welcome to ASCII Studio</h2>
-            <p class="subheading">Your client-side generator for text-art & digital styles.</p>
+            <p class="subheading">Your generator for complex text-art & digital styles.</p>
             <ul>
-                <li><strong>AI Prompts:</strong> Type a prompt to generate art. The app will download a Hugging Face model into your browser to process prompts offline.</li>
-                <li><strong>Source Images:</strong> Uploaded images bypass the AI and are perfectly pixel-mapped to ASCII blocks based on contrast.</li>
-                <li><strong>Privacy:</strong> Everything runs 100% locally in your browser.</li>
+                <li><strong>AI Prompts:</strong> Type a complex prompt. The app uses a free, keyless AI Image API to visualize your scene, then maps it locally into ASCII blocks.</li>
+                <li><strong>Source Images:</strong> Uploaded images bypass the AI and are perfectly pixel-mapped to ASCII based on contrast.</li>
+                <li><strong>Export:</strong> Save your creations directly to your device as PNG or plain text.</li>
             </ul>
             <button id="close-intro" class="btn white-btn">Got it</button>
+        </div>
+    </div>
+
+    <!-- Support / Donate Modal -->
+    <div id="donate-modal" class="modal hidden">
+        <div class="modal-content donate-content">
+            <h2>❤️ Support ASCII Studio</h2>
+            <p class="subheading">This tool is free and open-source.</p>
+            <p>If you find it useful, consider supporting the developer.</p>
+            <div style="margin-top: 24px; display: flex; flex-direction: column; gap: 12px;">
+                <a href="https://www.paypal.com/donate/?hosted_button_id=E5ZY9CWMAV9Z6" class="btn white-btn">Donate via PayPal</a>
+                <button id="close-donate" class="btn ghost">Maybe Later</button>
+            </div>
         </div>
     </div>
 
@@ -91,11 +104,11 @@
     <div id="loading-modal" class="modal hidden">
         <div class="modal-content loading-content">
             <div class="spinner"></div>
-            <h2 id="loading-text">Initializing Engine...</h2>
-            <p id="loading-subtext" class="subheading">Please wait.</p>
+            <h2 id="loading-text">Generating AI Scene...</h2>
+            <p id="loading-subtext" class="subheading">Visualizing your prompt and rendering to ASCII.</p>
         </div>
     </div>
 
-    <script type="module" src="app.js"></script>
+    <script src="app.js"></script>
 </body>
 </html>

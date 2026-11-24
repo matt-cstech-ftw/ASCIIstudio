@@ -53,18 +53,19 @@ body {
 .logo span { font-weight: 300; opacity: 0.7; }
 
 .header-actions { display: flex; align-items: center; gap: 24px; }
-.utility-link { color: var(--text-muted); text-decoration: none; font-size: 0.9rem; transition: color 0.2s; }
+.utility-link { color: var(--text-muted); text-decoration: none; font-size: 0.9rem; transition: color 0.2s; cursor: pointer; }
 .utility-link:hover { color: var(--text-main); }
 .support-btn {
+    background: transparent;
     border: 1px solid var(--border-color);
     border-radius: 20px;
     padding: 6px 16px;
     color: var(--text-main);
-    text-decoration: none;
     font-size: 0.9rem;
     display: flex;
     align-items: center;
     gap: 6px;
+    cursor: pointer;
     transition: all 0.2s;
 }
 .support-btn:hover { border-color: var(--danger); background: rgba(255, 59, 48, 0.05); }
@@ -234,8 +235,8 @@ textarea::placeholder { color: #444; }
 
 #ascii-output {
     font-family: var(--font-mono);
-    font-size: 8px;
-    line-height: 8px;
+    font-size: 7px;
+    line-height: 7px;
     white-space: pre;
     color: var(--text-main);
     text-align: center;
@@ -247,6 +248,13 @@ textarea::placeholder { color: #444; }
     display: flex;
     justify-content: center;
     gap: 16px;
+}
+.btn {
+    text-decoration: none;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    box-sizing: border-box;
 }
 .btn.ghost {
     background: var(--bg-input);
@@ -262,6 +270,8 @@ textarea::placeholder { color: #444; }
 .btn.white-btn {
     background: white; color: black; padding: 10px 20px; border: none; border-radius: 8px; font-weight: bold; cursor: pointer;
 }
+.donate-content { text-align: center; }
+.donate-content p { margin-bottom: 12px; }
 
 /* Modals */
 .hidden { display: none !important; }

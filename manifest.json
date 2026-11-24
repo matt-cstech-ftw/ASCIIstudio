@@ -1,7 +1,7 @@
 {
   "name": "ASCII Studio",
   "short_name": "ASCII",
-  "description": "Client-side AI generator for text-art and digital styles.",
+  "description": "AI generator for complex text-art and digital styles.",
   "start_url": "./index.html",
   "display": "standalone",
   "background_color": "#000000",
