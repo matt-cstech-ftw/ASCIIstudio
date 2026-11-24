@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>ASCII Studio</title>
+    <link rel="stylesheet" href="style.css">
+    <link rel="manifest" href="manifest.json">
+    <meta name="theme-color" content="#000000">
+</head>
+<body>
+    <header class="app-header">
+        <div class="logo">
+            <img src="assets/logo.svg" alt="ASCII Studio Logo" class="logo-icon">
+            <h1>ASCII<span>STUDIO</span></h1>
+        </div>
+        <div class="header-actions">
+            <button id="help-btn" class="utility-btn">Need Help?</button>
+            <button id="donate-btn" class="utility-btn heart-btn">❤️ Support</button>
+        </div>
+    </header>
+
+    <main class="workspace">
+        <aside class="controls">
+            <section class="control-group">
+                <h2>Input</h2>
+                <textarea id="prompt-input" placeholder="Type a prompt (e.g. 'retro lighthouse in a storm')..."></textarea>
+                <div class="upload-wrapper">
+                    <button id="upload-btn" class="btn secondary">Upload Image</button>
+                    <input type="file" id="image-upload" accept="image/png, image/jpeg, image/webp" hidden>
+                </div>
+            </section>
+
+            <section class="control-group">
+                <h2>Aspect Ratio</h2>
+                <div class="ratio-selector">
+                    <button class="ratio-btn active" data-ratio="16:9">
+                        <span class="glyph w169"></span> 16:9
+                    </button>
+                    <button class="ratio-btn" data-ratio="1:1">
+                        <span class="glyph w11"></span> 1:1
+                    </button>
+                    <button class="ratio-btn" data-ratio="9:16">
+                        <span class="glyph w916"></span> 9:16
+                    </button>
+                </div>
+            </section>
+            
+            <section class="control-group">
+                <h2>Settings</h2>
+                <label>Style Ramp</label>
+                <select id="ramp-select">
+                    <option value="standard">Standard ASCII</option>
+                    <option value="blocks">Density Blocks</option>
+                    <option value="binary">Binary (01)</option>
+                </select>
+                
+                <label>Contrast</label>
+                <input type="range" id="contrast" min="0" max="200" value="100">
+                
+                <label>Animation Loop</label>
+                <select id="anim-select">
+                    <option value="none">Static</option>
+                    <option value="scanline">Scanline Sweep</option>
+                    <option value="flicker">Retro Flicker</option>
+                </select>
+            </section>
+
+            <button id="generate-btn" class="btn primary">Generate</button>
+        </aside>
+
+        <section class="preview-stage">
+            <div id="canvas-container">
+                <canvas id="render-canvas"></canvas>
+                <pre id="ascii-output"></pre>
+            </div>
+            <div class="export-actions">
+                <button id="export-text" class="btn ghost">Copy Text</button>
+                <button id="export-png" class="btn ghost">Save PNG</button>
+                <button id="export-gif" class="btn ghost">Save GIF</button>
+            </div>
+        </section>
+    </main>
+
+    <!-- Welcome / Help Modal -->
+    <div id="help-modal" class="modal hidden">
+        <div class="modal-content">
+            <h2>Welcome to ASCII Studio</h2>
+            <p class="subheading">Your client-side generator for text-art, digital styles, and looping GIFs.</p>
+            <ul>
+                <li><strong>Prompts:</strong> Enter text to generate algorithmic scenes.</li>
+                <li><strong>Images:</strong> Upload photos to convert them into stylized ASCII.</li>
+                <li><strong>Export:</strong> Save your art as static PNGs, looping GIFs, or raw text.</li>
+                <li><strong>Privacy:</strong> Everything runs 100% locally in your browser.</li>
+            </ul>
+            <button id="close-help" class="btn primary">Got it</button>
+        </div>
+    </div>
+
+    <!-- Donate Modal -->
+    <div id="donate-modal" class="modal hidden">
+        <div class="modal-content donate-content">
+            <h2>❤️ Support ASCII Studio</h2>
+            <p class="subheading">This tool is free and open-source.</p>
+            <p>If you find it useful, consider supporting the developer.</p>
+            <a href="https://www.paypal.com/donate/?hosted_button_id=E5ZY9CWMAV9Z6" target="_blank" class="btn primary donate-link">Donate via PayPal</a>
+            <button id="close-donate" class="btn ghost">Maybe Later</button>
+        </div>
+    </div>
+
+    <script src="app.js"></script>
+</body>
+</html>

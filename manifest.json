@@ -1,0 +1,16 @@
+{
+  "name": "ASCII Studio",
+  "short_name": "ASCII",
+  "description": "Client-side generator for text-art, digital styles, and looping GIFs.",
+  "start_url": "./index.html",
+  "display": "standalone",
+  "background_color": "#000000",
+  "theme_color": "#000000",
+  "icons": [
+    {
+      "src": "assets/logo.svg",
+      "sizes": "512x512",
+      "type": "image/svg+xml"
+    }
+  ]
+}
