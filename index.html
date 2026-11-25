@@ -56,7 +56,8 @@
                     <div class="control-col">
                         <label>COLOR MODE</label>
                         <div class="ratio-group">
-                            <button class="color-btn active" data-color="mono">B&W</button>
+                            <!-- Removed active class so user MUST choose -->
+                            <button class="color-btn" data-color="mono">B&W</button>
                             <button class="color-btn" data-color="color">Color</button>
                         </div>
                     </div>
@@ -73,9 +74,10 @@
             </div>
             
             <div class="canvas-wrapper">
-                <canvas id="render-canvas" hidden></canvas>
-                <!-- This is the container for the ASCII text output -->
-                <div id="ascii-output-container" style="position: relative;"></div>
+                <div class="scroll-area" id="scroll-area">
+                    <canvas id="render-canvas" hidden></canvas>
+                    <div id="ascii-output-container"></div>
+                </div>
             </div>
 
             <div class="export-actions">
@@ -113,7 +115,6 @@
                 <div class="donate-name">Matt | CS Tech Solutions</div>
                 <div class="donate-desc">Empower progress by supporting our online community tool development. A quick $3 donation unlocks the watermark removal permanently!</div>
                 
-                <!-- This container will hold the native PayPal/Venmo/Card buttons -->
                 <div id="paypal-button-container" style="margin-top: 24px; min-height: 150px;"></div>
                 
             </div>
@@ -128,6 +129,8 @@
         </div>
     </div>
     
+    <img id="as-logo-src" src="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAxMDAgMTAwIj48cmVjdCB3aWR0aD0iMTAwIiBoZWlnaHQ9IjEwMCIgcng9IjIwIiBmaWxsPSJ3aGl0ZSIvPjx0ZXh0IHg9IjUwIiB5PSI2NSIgZm9udC1mYW1pbHk9Ii1hcHBsZS1zeXN0ZW0sIEJsaW5rTWFjU3lzdGVtRm9udCwgJ1NlZ29lIFVJJywgUm9ib3RvLCBIZWx2ZXRpY2EsIEFyaWFsLCBzYW5zLXNlcmlmIiBmb250LXdlaWdodD0iOTAwIiBmb250LXNpemU9IjQ2IiB0ZXh0LWFuY2hvcj0ibWlkZGxlIiBmaWxsPSJibGFjayIgbGV0dGVyLXNwYWNpbmc9Ii0zIj5BUzwvdGV4dD48L3N2Zz4=" hidden>
+
     <script src="app.js"></script>
 </body>
 </html>

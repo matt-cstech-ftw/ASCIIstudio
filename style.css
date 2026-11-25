@@ -43,8 +43,8 @@ body {
 .logo h1 { font-size: 1.2rem; font-weight: 900; letter-spacing: 0.5px; text-transform: uppercase; }
 .logo span { font-weight: 300; opacity: 0.7; }
 
-.header-actions { display: flex; align-items: center; gap: 24px; }
-.utility-link { color: var(--text-muted); text-decoration: none; font-size: 0.9rem; transition: color 0.2s; cursor: pointer; }
+.header-actions { display: flex; align-items: center; gap: 16px; }
+.utility-link { color: var(--text-muted); text-decoration: none; font-size: 0.9rem; transition: color 0.2s; cursor: pointer; white-space: nowrap; }
 .utility-link:hover { color: var(--text-main); }
 .support-btn {
     background: transparent;
@@ -58,8 +58,19 @@ body {
     gap: 6px;
     cursor: pointer;
     transition: all 0.2s;
+    white-space: nowrap;
 }
 .support-btn:hover { border-color: var(--danger); background: rgba(255, 59, 48, 0.05); }
+
+/* Mobile Header Fix */
+@media (max-width: 600px) {
+    .app-header { padding: 12px 16px; }
+    .logo h1 { font-size: 1rem; }
+    .logo-img { width: 28px; height: 28px; }
+    .header-actions { gap: 12px; }
+    .utility-link { font-size: 0.8rem; }
+    .support-btn { padding: 5px 10px; font-size: 0.8rem; }
+}
 
 .main-container {
     flex: 1;
@@ -138,6 +149,10 @@ textarea::placeholder { color: #444; }
 .controls-row { display: flex; gap: 24px; }
 .control-col { flex: 1; display: flex; flex-direction: column; gap: 12px; }
 
+@media (max-width: 600px) {
+    .controls-row { flex-direction: column; gap: 16px; }
+}
+
 .ratio-group {
     display: flex;
     gap: 12px;
@@ -213,11 +228,19 @@ textarea::placeholder { color: #444; }
     background: var(--bg-panel);
     border: 1px solid var(--border-color);
     border-radius: var(--radius);
-    padding: 24px;
+    position: relative;
+    overflow: hidden; /* Hide overflow outside the box */
     display: flex;
-    align-items: center;
-    justify-content: center;
-    overflow: hidden;
+    flex-direction: column;
+}
+
+.scroll-area {
+    width: 100%;
+    max-height: 70vh; /* Limits height so it stays within viewport */
+    overflow: auto; /* Allows panning around the large ASCII image */
+    padding: 24px;
+    text-align: center;
+    -webkit-overflow-scrolling: touch; /* Smooth scrolling on mobile */
 }
 
 #ascii-output-container {
@@ -227,11 +250,12 @@ textarea::placeholder { color: #444; }
     white-space: pre;
     text-align: center;
     letter-spacing: 0;
+    display: inline-block; /* allows it to center but not get clipped on left side when scrolling */
 }
 
 /* 
  * The overlay watermark styling for the HTML output.
- * We position it over the ASCII text container directly instead of drawing onto the canvas. 
+ * Positioned relative to the outer .canvas-wrapper so it floats above the scrollable area.
  */
 .watermark-overlay {
     position: absolute;
@@ -266,6 +290,7 @@ textarea::placeholder { color: #444; }
     display: flex;
     justify-content: center;
     gap: 16px;
+    flex-wrap: wrap;
 }
 .btn {
     text-decoration: none;

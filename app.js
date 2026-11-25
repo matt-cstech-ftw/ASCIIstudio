@@ -26,9 +26,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
     let currentImage = null;
     let isProUser = false; 
-    let activeWatermarkElement = null; // Store reference to DOM overlay
+    let activeWatermarkElement = null;
 
-    // Global variables for re-render state
     let globalCols, globalRows, globalColorMode;
 
     if (localStorage.getItem('asciiStudioPro') === 'true') {
@@ -52,7 +51,7 @@ document.addEventListener('DOMContentLoaded', () => {
     removeWatermarkBtn.addEventListener('click', () => donateModal.classList.remove('hidden'));
     closeDonate.addEventListener('click', () => donateModal.classList.add('hidden'));
 
-    // ----- PayPal Smart Buttons Initialization -----
+    // ----- PayPal Smart Buttons -----
     if (window.paypal) {
         paypal.Buttons({
             style: {
@@ -78,7 +77,6 @@ document.addEventListener('DOMContentLoaded', () => {
                     
                     alert('Thank you for supporting ASCII Studio! The watermark has been removed permanently.');
                     
-                    // Immediately remove watermark from UI if viewing a result
                     if (!resultView.classList.contains('hidden') && activeWatermarkElement) {
                         activeWatermarkElement.remove();
                         activeWatermarkElement = null;
@@ -149,8 +147,14 @@ document.addEventListener('DOMContentLoaded', () => {
     generateBtn.addEventListener('click', async () => {
         const prompt = promptInput.value.trim();
         const ratioStr = document.querySelector('.ratio-btn.active').dataset.ratio;
-        const colorMode = document.querySelector('.color-btn.active').dataset.color;
         
+        // Ensure a color mode was manually selected by checking for active class
+        const activeColorBtn = document.querySelector('.color-btn.active');
+        if (!activeColorBtn) {
+            alert("Please select either B&W or Color before generating! ☺️");
+            return;
+        }
+        const colorMode = activeColorBtn.dataset.color;
         globalColorMode = colorMode;
 
         if (!currentImage && !prompt) {
@@ -181,7 +185,6 @@ document.addEventListener('DOMContentLoaded', () => {
                 await new Promise(r => setTimeout(r, 50));
                 
                 renderImageToCanvas(ctx, currentImage, cols, rows);
-                
                 convertCanvasToAscii(ctx, cols, rows, colorMode); 
             } else {
                 loadingText.innerText = "Generating AI Scene...";
@@ -205,8 +208,6 @@ document.addEventListener('DOMContentLoaded', () => {
                     img.src = imgUrl;
                 });
                 
-                // Scrub the native Pollinations AI watermark explicitly before mapping
-                // This removes the blurry AI watermark from being rendered into ASCII
                 const markSizeW = Math.floor(cols * 0.2); 
                 const markSizeH = Math.floor(rows * 0.15); 
                 ctx.fillStyle = "black";
@@ -214,7 +215,6 @@ document.addEventListener('DOMContentLoaded', () => {
 
                 convertCanvasToAscii(ctx, cols, rows, colorMode);
                 
-                // If not a Pro user and it's an AI generation, apply our HTML watermark overlay
                 if (!isProUser) {
                     addHtmlWatermark();
                 }
@@ -282,7 +282,7 @@ document.addEventListener('DOMContentLoaded', () => {
             <img src="assets/logo.svg" alt="AS Logo">
             <div class="wm-text">ASCII<span>STUDIO</span></div>
         `;
-        asciiOutputContainer.appendChild(wm);
+        document.querySelector('.canvas-wrapper').appendChild(wm);
         activeWatermarkElement = wm;
     }
 
@@ -296,11 +296,6 @@ document.addEventListener('DOMContentLoaded', () => {
         const canvas = document.createElement('canvas');
         const ctx = canvas.getContext('2d');
         
-        // Remove the watermark overlay HTML block from the lines array so we don't try to render it as text
-        if (lines[lines.length - 1].includes('watermark-overlay')) {
-            lines.pop();
-        }
-
         const tempDiv = document.createElement('div');
         tempDiv.innerHTML = lines[0];
         const cols = tempDiv.childNodes.length;
@@ -325,7 +320,6 @@ document.addEventListener('DOMContentLoaded', () => {
             });
         });
         
-        // If they are not pro, draw the watermark onto the PNG export as well
         if (!isProUser) {
             const asLogo = new Image();
             asLogo.onload = () => {

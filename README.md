@@ -1,6 +1,6 @@
-# ASCII Studio (V12)
+# ASCII Studio (V13)
 
-A client-side ASCII generator featuring a secure monetization loop using the official PayPal Smart Buttons JS SDK. Replaces native AI watermarks with a clean HTML/CSS overlay watermark and unlocks a clean render upon donation.
+A client-side ASCII generator featuring a secure monetization loop using the official PayPal Smart Buttons JS SDK. Updated with full mobile responsiveness (scrolling/panning) and mandatory color mode selection.
 
 ## Deployment to GitHub Pages
 
@@ -13,7 +13,7 @@ A client-side ASCII generator featuring a secure monetization loop using the off
    ```bash
    git init
    git add .
-   git commit -m "Update: Refined watermark overlay and PNG export rendering"
+   git commit -m "Update: Fixed mobile header layout, added canvas panning, and enforced color mode selection"
    git branch -M main
    git remote add origin https://github.com/matt-cstech-ftw/ASCIIstudio.git
    git push -u origin main -f
