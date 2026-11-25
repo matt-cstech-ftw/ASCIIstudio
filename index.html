@@ -7,11 +7,14 @@
     <link rel="stylesheet" href="style.css">
     <link rel="manifest" href="manifest.json">
     <meta name="theme-color" content="#080808">
+    
+    <!-- PayPal Smart Buttons SDK (Replace 'test' with your live Client ID) -->
+    <script src="https://www.paypal.com/sdk/js?client-id=test&currency=USD&enable-funding=venmo,card&intent=capture"></script>
 </head>
 <body>
     <header class="app-header">
         <div class="logo">
-            <div class="logo-icon">AS</div>
+            <img src="assets/logo.svg" alt="AS Logo" class="logo-img">
             <h1>ASCII<span>STUDIO</span></h1>
         </div>
         <div class="header-actions">
@@ -22,7 +25,6 @@
 
     <main class="main-container">
         
-        <!-- Input Form -->
         <div id="setup-view">
             <div class="section">
                 <label>CREATION PROMPT</label>
@@ -64,7 +66,6 @@
             <button id="generate-btn" class="generate-btn">GENERATE</button>
         </div>
 
-        <!-- Output Result -->
         <div id="result-view" class="hidden">
             <div class="result-header">
                 <label>GENERATED ASCII ART</label>
@@ -73,8 +74,8 @@
             
             <div class="canvas-wrapper">
                 <canvas id="render-canvas" hidden></canvas>
-                <!-- the container that holds HTML output -->
-                <div id="ascii-output-container"></div>
+                <!-- This is the container for the ASCII text output -->
+                <div id="ascii-output-container" style="position: relative;"></div>
             </div>
 
             <div class="export-actions">
@@ -85,7 +86,6 @@
 
     </main>
 
-    <!-- Intro / Help Modal -->
     <div id="intro-modal" class="modal hidden">
         <div class="modal-content">
             <h2>Welcome to ASCII Studio</h2>
@@ -99,7 +99,7 @@
         </div>
     </div>
 
-    <!-- OmniFeed Style Donate Modal -->
+    <!-- Smart Buttons Donate Modal -->
     <div id="donate-modal" class="modal donate-overlay hidden">
         <div class="donate-window">
             <div class="donate-header">
@@ -111,22 +111,15 @@
             <div class="donate-body">
                 <div class="donate-title">Donate to</div>
                 <div class="donate-name">Matt | CS Tech Solutions</div>
-                <div class="donate-desc">Empower progress by supporting our online community tool development. Any donation unlocks the watermark removal!</div>
+                <div class="donate-desc">Empower progress by supporting our online community tool development. A quick $3 donation unlocks the watermark removal permanently!</div>
                 
-                <a href="https://www.paypal.com/donate/?hosted_button_id=E5ZY9CWMAV9Z6" target="_blank" class="donate-button btn-paypal" id="paypal-link">
-                    <i>PayPal</i> Donate
-                </a>
-                <button class="donate-button btn-venmo">
-                    <i>venmo</i> Donate
-                </button>
-                <button class="donate-button btn-outline">
-                    Donate with Debit or Credit Card
-                </button>
+                <!-- This container will hold the native PayPal/Venmo/Card buttons -->
+                <div id="paypal-button-container" style="margin-top: 24px; min-height: 150px;"></div>
+                
             </div>
         </div>
     </div>
 
-    <!-- Generating / Loading Modal -->
     <div id="loading-modal" class="modal hidden">
         <div class="modal-content loading-content">
             <div class="spinner"></div>
@@ -135,9 +128,6 @@
         </div>
     </div>
     
-    <!-- Hidden logo data for canvas drawing -->
-    <img id="as-logo-src" src="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAxMDAgMTAwIj48cmVjdCB3aWR0aD0iMTAwIiBoZWlnaHQ9IjEwMCIgcng9IjIwIiBmaWxsPSJ3aGl0ZSIvPjx0ZXh0IHg9IjUwIiB5PSI2NSIgZm9udC1mYW1pbHk9Ii1hcHBsZS1zeXN0ZW0sIEJsaW5rTWFjU3lzdGVtRm9udCwgJ1NlZ29lIFVJJywgUm9ib3RvLCBIZWx2ZXRpY2EsIEFyaWFsLCBzYW5zLXNlcmlmIiBmb250LXdlaWdodD0iOTAwIiBmb250LXNpemU9IjQ2IiB0ZXh0LWFuY2hvcj0ibWlkZGxlIiBmaWxsPSJibGFjayIgbGV0dGVyLXNwYWNpbmc9Ii0zIj5BUzwvdGV4dD48L3N2Zz4=" hidden>
-
     <script src="app.js"></script>
 </body>
 </html>

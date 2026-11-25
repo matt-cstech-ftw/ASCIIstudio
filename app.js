@@ -1,47 +1,41 @@
 document.addEventListener('DOMContentLoaded', () => {
-    // Views
     const setupView = document.getElementById('setup-view');
     const resultView = document.getElementById('result-view');
-    
-    // Inputs
     const promptInput = document.getElementById('prompt-input');
     const dropZone = document.getElementById('drop-zone');
     const imageUpload = document.getElementById('image-upload');
     const dropContent = document.getElementById('drop-content');
     const ratioBtns = document.querySelectorAll('.ratio-btn');
     const colorBtns = document.querySelectorAll('.color-btn');
-    
-    // Actions
     const generateBtn = document.getElementById('generate-btn');
     const resetBtn = document.getElementById('reset-btn');
     const exportPng = document.getElementById('export-png');
     const removeWatermarkBtn = document.getElementById('remove-watermark-btn');
     const asciiOutputContainer = document.getElementById('ascii-output-container');
-    const asLogoSrc = document.getElementById('as-logo-src');
     
-    // Modals
     const introModal = document.getElementById('intro-modal');
     const donateModal = document.getElementById('donate-modal');
     const helpBtn = document.getElementById('help-btn');
     const supportBtn = document.getElementById('support-btn');
     const closeIntro = document.getElementById('close-intro');
     const closeDonate = document.getElementById('close-donate');
-    const paypalLink = document.getElementById('paypal-link');
     
     const loadingModal = document.getElementById('loading-modal');
     const loadingText = document.getElementById('loading-text');
     const loadingSubtext = document.getElementById('loading-subtext');
 
     let currentImage = null;
-    let isProUser = false; // State track if watermark is removed
+    let isProUser = false; 
+    let activeWatermarkElement = null; // Store reference to DOM overlay
 
-    // Check local storage for pro status (persisted across sessions)
+    // Global variables for re-render state
+    let globalCols, globalRows, globalColorMode;
+
     if (localStorage.getItem('asciiStudioPro') === 'true') {
         isProUser = true;
-        removeWatermarkBtn.classList.add('hidden'); // Hide button if already paid
+        removeWatermarkBtn.classList.add('hidden');
     }
 
-    // ----- Modal Controls -----
     if (!localStorage.getItem('asciiStudioWelcome')) {
         introModal.classList.remove('hidden');
     }
@@ -58,21 +52,42 @@ document.addEventListener('DOMContentLoaded', () => {
     removeWatermarkBtn.addEventListener('click', () => donateModal.classList.remove('hidden'));
     closeDonate.addEventListener('click', () => donateModal.classList.add('hidden'));
 
-    // If user clicks the donate link, we grant them pro status to remove watermark
-    paypalLink.addEventListener('click', () => {
-        isProUser = true;
-        localStorage.setItem('asciiStudioPro', 'true');
-        removeWatermarkBtn.classList.add('hidden');
-        donateModal.classList.add('hidden');
-        
-        // If they just donated on the result page, regenerate without the watermark immediately
-        if (!resultView.classList.contains('hidden')) {
-            // Re-run conversion using the current canvas state but passing true to skip logo
-            reRenderCurrentState();
-        }
-    });
+    // ----- PayPal Smart Buttons Initialization -----
+    if (window.paypal) {
+        paypal.Buttons({
+            style: {
+                layout: 'vertical',
+                color:  'gold',
+                shape:  'pill',
+                label:  'donate'
+            },
+            createOrder: function(data, actions) {
+                return actions.order.create({
+                    purchase_units: [{
+                        amount: { value: '3.00' },
+                        description: 'ASCII Studio Watermark Removal'
+                    }]
+                });
+            },
+            onApprove: function(data, actions) {
+                return actions.order.capture().then(function(details) {
+                    isProUser = true;
+                    localStorage.setItem('asciiStudioPro', 'true');
+                    removeWatermarkBtn.classList.add('hidden');
+                    donateModal.classList.add('hidden');
+                    
+                    alert('Thank you for supporting ASCII Studio! The watermark has been removed permanently.');
+                    
+                    // Immediately remove watermark from UI if viewing a result
+                    if (!resultView.classList.contains('hidden') && activeWatermarkElement) {
+                        activeWatermarkElement.remove();
+                        activeWatermarkElement = null;
+                    }
+                });
+            }
+        }).render('#paypal-button-container');
+    }
 
-    // ----- Aspect Ratio & Color Selection -----
     ratioBtns.forEach(btn => {
         btn.addEventListener('click', () => {
             ratioBtns.forEach(b => b.classList.remove('active'));
@@ -86,7 +101,6 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     });
 
-    // ----- Drag & Drop Image Handling -----
     dropZone.addEventListener('click', () => imageUpload.click());
     dropZone.addEventListener('dragover', (e) => { e.preventDefault(); dropZone.classList.add('dragover'); });
     dropZone.addEventListener('dragleave', () => dropZone.classList.remove('dragover'));
@@ -116,7 +130,6 @@ document.addEventListener('DOMContentLoaded', () => {
         reader.readAsDataURL(file);
     }
 
-    // ----- Reset View -----
     resetBtn.addEventListener('click', () => {
         resultView.classList.add('hidden');
         setupView.classList.remove('hidden');
@@ -127,28 +140,12 @@ document.addEventListener('DOMContentLoaded', () => {
         promptInput.disabled = false;
         promptInput.placeholder = "Describe a complex scene, object, or concept (e.g., 'a cute house')...";
         asciiOutputContainer.innerHTML = ''; 
+        if (activeWatermarkElement) {
+            activeWatermarkElement.remove();
+            activeWatermarkElement = null;
+        }
     });
 
-    // Global variables to hold state for immediate re-renders (like removing watermark post-donation)
-    let globalCols, globalRows, globalColorMode;
-
-    function reRenderCurrentState() {
-        const canvas = document.getElementById('render-canvas');
-        const ctx = canvas.getContext('2d', { willReadFrequently: true });
-        
-        // Since we already have the raw image painted on the canvas, 
-        // if they are Pro, we need to scrub the corner before conversion.
-        if (isProUser && !currentImage) {
-            // Paint black over where the AI watermark/logo used to be
-            const markSize = Math.floor(globalCols * 0.15); // match scale
-            ctx.fillStyle = "black";
-            ctx.fillRect(globalCols - markSize - 1, globalRows - markSize - 1, markSize + 2, markSize + 2);
-        }
-        
-        convertCanvasToAscii(ctx, globalCols, globalRows, globalColorMode, isProUser);
-    }
-
-    // ----- Main Generation Action -----
     generateBtn.addEventListener('click', async () => {
         const prompt = promptInput.value.trim();
         const ratioStr = document.querySelector('.ratio-btn.active').dataset.ratio;
@@ -185,20 +182,16 @@ document.addEventListener('DOMContentLoaded', () => {
                 
                 renderImageToCanvas(ctx, currentImage, cols, rows);
                 
-                // Uploaded images don't have Pollinations watermarks, so we treat it as clean
-                convertCanvasToAscii(ctx, cols, rows, colorMode, true); 
+                convertCanvasToAscii(ctx, cols, rows, colorMode); 
             } else {
                 loadingText.innerText = "Generating AI Scene...";
                 loadingSubtext.innerText = "Visualizing prompt (this may take a moment)";
                 
                 let enhancedPrompt = prompt + ", highly detailed";
-                
                 const seed = Math.floor(Math.random() * 10000000);
                 const targetW = cols * 8;
                 const targetH = rows * 8;
                 
-                // Note: we remove nologo=true to allow the AI to generate normally and avoid the error box bug entirely.
-                // We will programmatically overwrite the Pollinations logo with the AS logo (or remove it) ourselves!
                 const imgUrl = `https://image.pollinations.ai/prompt/${encodeURIComponent(enhancedPrompt)}?width=${targetW}&height=${targetH}&seed=${seed}`;
                 
                 await new Promise((resolve, reject) => {
@@ -212,20 +205,19 @@ document.addEventListener('DOMContentLoaded', () => {
                     img.src = imgUrl;
                 });
                 
-                // Check Pro status and handle the watermark zone
-                if (isProUser) {
-                    // Scrub the area entirely with black
-                    const markSize = Math.floor(cols * 0.15); // The AI logo is small in the corner
-                    ctx.fillStyle = "black";
-                    ctx.fillRect(cols - markSize, rows - markSize, markSize, markSize);
-                } else {
-                    // Overwrite the Pollinations logo with the AS logo
-                    const markW = Math.floor(cols * 0.08); // small icon
-                    const markH = markW;
-                    ctx.drawImage(asLogoSrc, cols - markW - 2, rows - markH - 2, markW, markH);
-                }
+                // Scrub the native Pollinations AI watermark explicitly before mapping
+                // This removes the blurry AI watermark from being rendered into ASCII
+                const markSizeW = Math.floor(cols * 0.2); 
+                const markSizeH = Math.floor(rows * 0.15); 
+                ctx.fillStyle = "black";
+                ctx.fillRect(cols - markSizeW, rows - markSizeH, markSizeW, markSizeH);
 
-                convertCanvasToAscii(ctx, cols, rows, colorMode, isProUser);
+                convertCanvasToAscii(ctx, cols, rows, colorMode);
+                
+                // If not a Pro user and it's an AI generation, apply our HTML watermark overlay
+                if (!isProUser) {
+                    addHtmlWatermark();
+                }
             }
 
             setupView.classList.add('hidden');
@@ -239,24 +231,20 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     });
 
-    // ----- Graphics Functions -----
     function renderImageToCanvas(ctx, img, cols, rows) {
         ctx.fillStyle = "black";
         ctx.fillRect(0, 0, cols, rows);
-        
         const scale = Math.min(cols / img.width, rows / img.height);
         const w = img.width * scale;
         const h = img.height * scale;
         const x = (cols - w) / 2;
         const y = (rows - h) / 2;
-        
         ctx.drawImage(img, x, y, w, h);
     }
 
-    function convertCanvasToAscii(ctx, cols, rows, colorMode, skipWatermarkCheck) {
+    function convertCanvasToAscii(ctx, cols, rows, colorMode) {
         const ramp = " .:-=+*#%@";
         const imgData = ctx.getImageData(0, 0, cols, rows).data;
-        
         let htmlOutput = "";
         
         for (let y = 0; y < rows; y++) {
@@ -267,14 +255,11 @@ document.addEventListener('DOMContentLoaded', () => {
                 const b = imgData[offset+2];
                 
                 let brightness = (0.299*r + 0.587*g + 0.114*b);
-                
-                // Mild contrast boost to ensure dark background colors snap to black (' ')
                 brightness = ((brightness / 255 - 0.5) * 1.2 + 0.5) * 255;
                 brightness = Math.max(0, Math.min(255, brightness));
 
                 const charIdx = Math.floor((brightness / 255) * (ramp.length - 1));
                 const char = ramp[charIdx];
-                
                 const displayChar = (char === ' ') ? '&nbsp;' : char;
 
                 if (colorMode === "color") {
@@ -285,11 +270,22 @@ document.addEventListener('DOMContentLoaded', () => {
             }
             htmlOutput += '<br>';
         }
-        
         asciiOutputContainer.innerHTML = htmlOutput;
     }
 
-    // ----- Export Action -----
+    function addHtmlWatermark() {
+        if (activeWatermarkElement) activeWatermarkElement.remove();
+        
+        const wm = document.createElement('div');
+        wm.className = 'watermark-overlay';
+        wm.innerHTML = `
+            <img src="assets/logo.svg" alt="AS Logo">
+            <div class="wm-text">ASCII<span>STUDIO</span></div>
+        `;
+        asciiOutputContainer.appendChild(wm);
+        activeWatermarkElement = wm;
+    }
+
     exportPng.addEventListener('click', () => {
         const charW = 6;
         const charH = 10;
@@ -300,6 +296,11 @@ document.addEventListener('DOMContentLoaded', () => {
         const canvas = document.createElement('canvas');
         const ctx = canvas.getContext('2d');
         
+        // Remove the watermark overlay HTML block from the lines array so we don't try to render it as text
+        if (lines[lines.length - 1].includes('watermark-overlay')) {
+            lines.pop();
+        }
+
         const tempDiv = document.createElement('div');
         tempDiv.innerHTML = lines[0];
         const cols = tempDiv.childNodes.length;
@@ -319,16 +320,41 @@ document.addEventListener('DOMContentLoaded', () => {
             Array.from(tempDiv.childNodes).forEach((span, colIdx) => {
                 ctx.fillStyle = span.style.color || "#FFFFFF";
                 let char = span.innerText || span.textContent;
-                if (char.length > 1 && char.charCodeAt(0) === 160) {
-                    char = " ";
-                }
+                if (char.length > 1 && char.charCodeAt(0) === 160) char = " ";
                 ctx.fillText(char, 20 + (colIdx * charW), 20 + (rowIdx * charH));
             });
         });
         
+        // If they are not pro, draw the watermark onto the PNG export as well
+        if (!isProUser) {
+            const asLogo = new Image();
+            asLogo.onload = () => {
+                const wmWidth = 140;
+                const wmHeight = 40;
+                ctx.fillStyle = "black";
+                ctx.fillRect(canvas.width - wmWidth - 20, canvas.height - wmHeight - 20, wmWidth, wmHeight);
+                ctx.drawImage(asLogo, canvas.width - wmWidth - 10, canvas.height - wmHeight - 12, 24, 24);
+                
+                ctx.fillStyle = "white";
+                ctx.font = "800 16px sans-serif";
+                ctx.fillText("ASCII", canvas.width - wmWidth + 18, canvas.height - wmHeight - 8);
+                
+                ctx.fillStyle = "white";
+                ctx.font = "300 16px sans-serif";
+                ctx.fillText("STUDIO", canvas.width - wmWidth + 64, canvas.height - wmHeight - 8);
+                
+                triggerDownload(canvas);
+            };
+            asLogo.src = 'assets/logo.svg';
+        } else {
+            triggerDownload(canvas);
+        }
+    });
+
+    function triggerDownload(canvas) {
         const link = document.createElement('a');
         link.download = 'ascii-studio-render.png';
         link.href = canvas.toDataURL('image/png');
         link.click();
-    });
+    }
 });

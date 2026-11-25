@@ -1,20 +1,20 @@
-# ASCII Studio (V10)
+# ASCII Studio (V12)
 
-A client-side ASCII generator featuring a monetization loop: replaces native AI watermarks with the AS logo and unlocks a clean render upon a PayPal donation.
+A client-side ASCII generator featuring a secure monetization loop using the official PayPal Smart Buttons JS SDK. Replaces native AI watermarks with a clean HTML/CSS overlay watermark and unlocks a clean render upon donation.
 
 ## Deployment to GitHub Pages
 
-1. **Push the code:**
+1. **Get your PayPal Client ID:**
+   You must replace `test` in `index.html` with your live PayPal Client ID for real transactions to process.
+   `<script src="https://www.paypal.com/sdk/js?client-id=YOUR_LIVE_CLIENT_ID...`
+
+2. **Push the code:**
    Unzip these files into your local directory.
    ```bash
    git init
    git add .
-   git commit -m "Update: Added AS logo watermark and donation removal flow"
+   git commit -m "Update: Refined watermark overlay and PNG export rendering"
    git branch -M main
    git remote add origin https://github.com/matt-cstech-ftw/ASCIIstudio.git
    git push -u origin main -f
    ```
-
-2. **Access your App:**
-   Wait a minute or two, and your PWA will be live at:
-   `https://matt-cstech-ftw.github.io/ASCIIstudio/`

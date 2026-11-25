@@ -25,7 +25,6 @@ body {
     flex-direction: column;
 }
 
-/* Header */
 .app-header {
     display: flex;
     justify-content: space-between;
@@ -36,18 +35,10 @@ body {
 }
 
 .logo { display: flex; align-items: center; gap: 12px; }
-.logo-icon {
-    background: white;
-    color: black;
-    font-weight: 900;
-    font-size: 18px;
-    letter-spacing: -1px;
+.logo-img {
     width: 32px;
     height: 32px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    border-radius: 6px;
+    display: block;
 }
 .logo h1 { font-size: 1.2rem; font-weight: 900; letter-spacing: 0.5px; text-transform: uppercase; }
 .logo span { font-weight: 300; opacity: 0.7; }
@@ -70,7 +61,6 @@ body {
 }
 .support-btn:hover { border-color: var(--danger); background: rgba(255, 59, 48, 0.05); }
 
-/* Main Container */
 .main-container {
     flex: 1;
     width: 100%;
@@ -81,7 +71,6 @@ body {
     flex-direction: column;
 }
 
-/* Setup View */
 .section { margin-bottom: 32px; display: flex; flex-direction: column; gap: 12px; }
 .section label {
     font-size: 0.75rem;
@@ -125,7 +114,6 @@ textarea::placeholder { color: #444; }
     background: var(--border-color);
 }
 
-/* Drop Zone */
 .drop-zone {
     border: 1px dashed var(--border-color);
     border-radius: var(--radius);
@@ -147,17 +135,8 @@ textarea::placeholder { color: #444; }
 .drop-sub { font-size: 0.85rem; color: var(--text-muted); font-weight: 300; line-height: 1.4; display: block; }
 .image-preview-active { border-style: solid; border-color: var(--text-main); background: #111; }
 
-/* Aspect Ratio & Color Toggle */
-.controls-row {
-    display: flex;
-    gap: 24px;
-}
-.control-col {
-    flex: 1;
-    display: flex;
-    flex-direction: column;
-    gap: 12px;
-}
+.controls-row { display: flex; gap: 24px; }
+.control-col { flex: 1; display: flex; flex-direction: column; gap: 12px; }
 
 .ratio-group {
     display: flex;
@@ -188,7 +167,6 @@ textarea::placeholder { color: #444; }
 .glyph.w11 { width: 12px; height: 12px; }
 .glyph.w916 { width: 9px; height: 16px; }
 
-/* Main Button */
 .generate-btn {
     width: 100%;
     background: var(--text-main);
@@ -206,9 +184,7 @@ textarea::placeholder { color: #444; }
 }
 .generate-btn:hover { opacity: 0.9; }
 .generate-btn:active { transform: scale(0.99); }
-.generate-btn:disabled { background: #333; color: #666; cursor: not-allowed; transform: none; }
 
-/* Result View */
 .result-header {
     display: flex;
     justify-content: space-between;
@@ -253,6 +229,38 @@ textarea::placeholder { color: #444; }
     letter-spacing: 0;
 }
 
+/* 
+ * The overlay watermark styling for the HTML output.
+ * We position it over the ASCII text container directly instead of drawing onto the canvas. 
+ */
+.watermark-overlay {
+    position: absolute;
+    bottom: 8px;
+    right: 8px;
+    display: flex;
+    align-items: center;
+    background: black;
+    padding: 6px 12px;
+    border-radius: 4px;
+    gap: 8px;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.8);
+    pointer-events: none;
+}
+.watermark-overlay img {
+    width: 24px;
+    height: 24px;
+}
+.watermark-overlay .wm-text {
+    color: white;
+    font-family: var(--font-sans);
+    font-weight: 800;
+    font-size: 16px;
+    letter-spacing: 1px;
+}
+.watermark-overlay .wm-text span {
+    font-weight: 300;
+}
+
 .export-actions {
     margin-top: 32px;
     display: flex;
@@ -292,7 +300,6 @@ textarea::placeholder { color: #444; }
     background: white; color: black; padding: 10px 20px; border: none; border-radius: 8px; font-weight: bold; cursor: pointer;
 }
 
-/* Modals */
 .hidden { display: none !important; }
 .modal {
     position: fixed;
@@ -318,7 +325,6 @@ textarea::placeholder { color: #444; }
 .modal-content li { margin-bottom: 16px; font-weight: 300;}
 .modal-content li strong { color: var(--text-main); font-weight: 600;}
 
-/* Loading State */
 .loading-content {
     background: transparent !important;
     border: none !important;
@@ -399,42 +405,5 @@ textarea::placeholder { color: #444; }
     color: #666;
     font-size: 0.9rem;
     line-height: 1.4;
-    margin-bottom: 24px;
+    margin-bottom: 0px;
 }
-.donate-button {
-    width: 100%;
-    padding: 14px;
-    border-radius: 24px;
-    border: none;
-    font-size: 1rem;
-    font-weight: 600;
-    cursor: pointer;
-    margin-bottom: 12px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    text-decoration: none;
-    box-sizing: border-box;
-}
-.donate-button i {
-    font-style: italic;
-    font-weight: 800;
-    margin-right: 6px;
-}
-.btn-paypal {
-    background: #FFC439;
-    color: #003087;
-}
-.btn-paypal:hover { background: #F2B933; }
-.btn-paypal i { color: #0079C1; }
-.btn-venmo {
-    background: #008CFF;
-    color: white;
-}
-.btn-venmo:hover { background: #007BDE; }
-.btn-outline {
-    background: white;
-    border: 2px solid #003087;
-    color: #003087;
-}
-.btn-outline:hover { background: #F8F8F8; }
