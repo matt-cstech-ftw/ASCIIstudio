@@ -105,7 +105,7 @@ document.addEventListener('DOMContentLoaded', () => {
         dropContent.innerHTML = `<span class="drop-title">Click to upload or drag & drop</span><span class="drop-sub">Converts image to digital character art<br>(PNG, JPG up to 10MB)</span>`;
         promptInput.disabled = false;
         promptInput.placeholder = "Describe a complex scene, object, or concept (e.g., 'a truck hauling a christmas tree')...";
-        asciiOutputContainer.innerHTML = ''; // clear previous
+        asciiOutputContainer.innerHTML = ''; 
     });
 
     // ----- Main Generation Action -----
@@ -126,8 +126,8 @@ document.addEventListener('DOMContentLoaded', () => {
             const canvas = document.getElementById('render-canvas');
             const ctx = canvas.getContext('2d', { willReadFrequently: true });
             
-            // Generate at high resolution, but map carefully to ascii blocks
-            const cols = 160; 
+            // Adjust column count to ensure high fidelity ASCII mapping
+            const cols = 150; 
             const [ratioW, ratioH] = ratioStr.split(':').map(Number);
             const rows = Math.round((cols * 0.5 * ratioH) / ratioW);
             
@@ -145,23 +145,35 @@ document.addEventListener('DOMContentLoaded', () => {
                 loadingText.innerText = "Generating AI Scene...";
                 loadingSubtext.innerText = "Visualizing prompt (this may take a moment)";
                 
-                // Instruct Pollinations AI based on mode
-                let enhancedPrompt = prompt;
+                // Instruct Pollinations AI based on mode. 
+                // We add "no watermark, no text" to the prompt explicitly to remove artifacts.
+                let enhancedPrompt = prompt + ", no watermark, no text, no signature";
                 if (colorMode === "mono") {
                     enhancedPrompt += ", high contrast black and white, graphic novel, clean silhouette, digital art";
                 } else {
                     enhancedPrompt += ", vibrant colors, high contrast, digital art, distinct shapes";
                 }
                 
-                // Use a seed to avoid caching issues on the same prompt
-                const seed = Math.floor(Math.random() * 1000000);
-                const imgUrl = `https://image.pollinations.ai/prompt/${encodeURIComponent(enhancedPrompt)}?width=${cols*4}&height=${rows*4}&nologo=true&seed=${seed}`;
+                // We use a high random seed to ensure uniqueness.
+                const seed = Math.floor(Math.random() * 10000000);
+                
+                // By requesting an image matching the exact target proportions (multiplied for quality),
+                // we ensure it maps perfectly into the ASCII grid without weird cropping or stretching.
+                const targetW = cols * 8;
+                const targetH = rows * 8;
+                const imgUrl = `https://image.pollinations.ai/prompt/${encodeURIComponent(enhancedPrompt)}?width=${targetW}&height=${targetH}&nologo=true&seed=${seed}`;
                 
                 await new Promise((resolve, reject) => {
                     const img = new Image();
                     img.crossOrigin = "Anonymous";
                     img.onload = () => {
                         renderImageToCanvas(ctx, img, cols, rows);
+                        
+                        // In some instances, AI models will place small white pixels in the far corners as a signature even with instructions.
+                        // We proactively scrub the bottom right corner (3x3 grid) of the canvas to remove those watermarks.
+                        ctx.fillStyle = "black";
+                        ctx.fillRect(cols - 3, rows - 3, 3, 3);
+                        
                         resolve();
                     };
                     img.onerror = () => reject(new Error("Failed to generate AI image. Please try again."));
@@ -186,15 +198,21 @@ document.addEventListener('DOMContentLoaded', () => {
     function renderImageToCanvas(ctx, img, cols, rows) {
         ctx.fillStyle = "black";
         ctx.fillRect(0, 0, cols, rows);
-        const scale = Math.max(cols / img.width, rows / img.height); // Cover fill
+        
+        // Use standard canvas scaling to fit the image
+        const scale = Math.max(cols / img.width, rows / img.height);
         const w = img.width * scale;
         const h = img.height * scale;
         const x = (cols - w) / 2;
         const y = (rows - h) / 2;
+        
+        // Because the AI provides the image on a true black background often, 
+        // drawing it onto our black canvas works perfectly for the ASCII mapper.
         ctx.drawImage(img, x, y, w, h);
     }
 
     function convertCanvasToAscii(ctx, cols, rows, colorMode) {
+        // High density character ramp. The far left space (' ') is crucial for black backgrounds.
         const ramp = " .:-=+*#%@";
         const imgData = ctx.getImageData(0, 0, cols, rows).data;
         
@@ -209,19 +227,20 @@ document.addEventListener('DOMContentLoaded', () => {
                 
                 let brightness = (0.299*r + 0.587*g + 0.114*b);
                 
-                // Increase contrast to preserve distinct edges
-                brightness = ((brightness / 255 - 0.5) * 1.5 + 0.5) * 255;
+                // Enhance contrast strongly. This forces slightly dark grays into pure black spaces, 
+                // which cleans up the "demonic" noise and leaves clean lines.
+                brightness = ((brightness / 255 - 0.5) * 1.8 + 0.5) * 255;
                 brightness = Math.max(0, Math.min(255, brightness));
 
                 const charIdx = Math.floor((brightness / 255) * (ramp.length - 1));
                 const char = ramp[charIdx];
                 
-                // Prevent HTML injection by safely handling spaces
                 const displayChar = (char === ' ') ? '&nbsp;' : char;
 
                 if (colorMode === "color") {
                     htmlOutput += `<span style="color: rgb(${r},${g},${b});">${displayChar}</span>`;
                 } else {
+                    // Force true monochrome
                     htmlOutput += `<span style="color: #FFFFFF;">${displayChar}</span>`;
                 }
             }
@@ -236,15 +255,12 @@ document.addEventListener('DOMContentLoaded', () => {
         const charW = 6;
         const charH = 10;
         
-        // Find dimensions based on child nodes
         const lines = asciiOutputContainer.innerHTML.split('<br>');
-        // Remove trailing empty split
         if (lines[lines.length - 1] === '') lines.pop();
 
         const canvas = document.createElement('canvas');
         const ctx = canvas.getContext('2d');
         
-        // Parse the first line to get column count
         const tempDiv = document.createElement('div');
         tempDiv.innerHTML = lines[0];
         const cols = tempDiv.childNodes.length;
@@ -263,7 +279,6 @@ document.addEventListener('DOMContentLoaded', () => {
             tempDiv.innerHTML = lineHtml;
             Array.from(tempDiv.childNodes).forEach((span, colIdx) => {
                 ctx.fillStyle = span.style.color || "#FFFFFF";
-                // decode html entities like &nbsp;
                 let char = span.innerText || span.textContent;
                 if (char.length > 1 && char.charCodeAt(0) === 160) {
                     char = " ";

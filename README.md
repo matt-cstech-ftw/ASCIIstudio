@@ -1,6 +1,6 @@
-# ASCII Studio (V7)
+# ASCII Studio (V8)
 
-A client-side ASCII generator that handles highly complex image generation using Pollinations AI. Includes a toggle for B&W vs Full-Color rendering, and features a replica of the OmniFeed donation modal.
+A client-side ASCII generator that handles highly complex image generation using Pollinations AI. Includes a toggle for B&W vs Full-Color rendering, artifact/watermark scrubbing, and high-contrast noise reduction.
 
 ## Deployment to GitHub Pages
 
@@ -9,7 +9,7 @@ A client-side ASCII generator that handles highly complex image generation using
    ```bash
    git init
    git add .
-   git commit -m "Update: Fixed prompt parameters, added color toggle, recreated exact donation modal"
+   git commit -m "Update: Removed AI watermarks and cleaned up background noise"
    git branch -M main
    git remote add origin https://github.com/matt-cstech-ftw/ASCIIstudio.git
    git push -u origin main -f
