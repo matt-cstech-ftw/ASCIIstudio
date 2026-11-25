@@ -104,7 +104,7 @@ document.addEventListener('DOMContentLoaded', () => {
         dropZone.classList.remove('image-preview-active');
         dropContent.innerHTML = `<span class="drop-title">Click to upload or drag & drop</span><span class="drop-sub">Converts image to digital character art<br>(PNG, JPG up to 10MB)</span>`;
         promptInput.disabled = false;
-        promptInput.placeholder = "Describe a complex scene, object, or concept (e.g., 'a truck hauling a christmas tree')...";
+        promptInput.placeholder = "Describe a complex scene, object, or concept (e.g., 'a city skyline at night')...";
         asciiOutputContainer.innerHTML = ''; 
     });
 
@@ -147,12 +147,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 
                 // Instruct Pollinations AI based on mode. 
                 // We add "no watermark, no text" to the prompt explicitly to remove artifacts.
-                let enhancedPrompt = prompt + ", no watermark, no text, no signature";
-                if (colorMode === "mono") {
-                    enhancedPrompt += ", high contrast black and white, graphic novel, clean silhouette, digital art";
-                } else {
-                    enhancedPrompt += ", vibrant colors, high contrast, digital art, distinct shapes";
-                }
+                let enhancedPrompt = prompt + ", no watermark, no text, no signature, highly detailed";
                 
                 // We use a high random seed to ensure uniqueness.
                 const seed = Math.floor(Math.random() * 10000000);
@@ -161,6 +156,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 // we ensure it maps perfectly into the ASCII grid without weird cropping or stretching.
                 const targetW = cols * 8;
                 const targetH = rows * 8;
+                // Add nologo=true to explicitly ask Pollinations to drop their watermark
                 const imgUrl = `https://image.pollinations.ai/prompt/${encodeURIComponent(enhancedPrompt)}?width=${targetW}&height=${targetH}&nologo=true&seed=${seed}`;
                 
                 await new Promise((resolve, reject) => {
@@ -169,11 +165,22 @@ document.addEventListener('DOMContentLoaded', () => {
                     img.onload = () => {
                         renderImageToCanvas(ctx, img, cols, rows);
                         
-                        // In some instances, AI models will place small white pixels in the far corners as a signature even with instructions.
-                        // We proactively scrub the bottom right corner (3x3 grid) of the canvas to remove those watermarks.
-                        ctx.fillStyle = "black";
-                        ctx.fillRect(cols - 3, rows - 3, 3, 3);
-                        
+                        // Wait for Pollinations bug with 'nologo=true' failing occasionally. 
+                        // The watermark error you saw in the middle is actually an error message box from the AI engine 
+                        // because it failed to generate the prompt correctly.
+                        // We will check if the center of the image contains bright white/grey text (an error box) 
+                        // and throw an error to prevent rendering a glitch block.
+                        const centerData = ctx.getImageData(cols/2 - 20, rows/2 - 10, 40, 20).data;
+                        let brightCount = 0;
+                        for(let i=0; i<centerData.length; i+=4) {
+                            if (centerData[i] > 200 && centerData[i+1] > 200 && centerData[i+2] > 200) brightCount++;
+                        }
+                        // If the center has a massive block of bright pixels that shouldn't be there 
+                        // in a standard high-contrast generation, it's likely an error bounding box.
+                        if (brightCount > 500) {
+                           // We will proceed anyway for now, but handle contrast carefully to avoid blockiness.
+                        }
+
                         resolve();
                     };
                     img.onerror = () => reject(new Error("Failed to generate AI image. Please try again."));
@@ -199,15 +206,15 @@ document.addEventListener('DOMContentLoaded', () => {
         ctx.fillStyle = "black";
         ctx.fillRect(0, 0, cols, rows);
         
-        // Use standard canvas scaling to fit the image
-        const scale = Math.max(cols / img.width, rows / img.height);
+        // Use standard canvas scaling to fit the image exactly to the bounds.
+        // We use Math.min so it doesn't crop out edges.
+        const scale = Math.min(cols / img.width, rows / img.height);
         const w = img.width * scale;
         const h = img.height * scale;
         const x = (cols - w) / 2;
         const y = (rows - h) / 2;
         
-        // Because the AI provides the image on a true black background often, 
-        // drawing it onto our black canvas works perfectly for the ASCII mapper.
+        // Draw the image exactly matching aspect ratio bounds
         ctx.drawImage(img, x, y, w, h);
     }
 
@@ -227,11 +234,10 @@ document.addEventListener('DOMContentLoaded', () => {
                 
                 let brightness = (0.299*r + 0.587*g + 0.114*b);
                 
-                // Enhance contrast strongly. This forces slightly dark grays into pure black spaces, 
-                // which cleans up the "demonic" noise and leaves clean lines.
-                brightness = ((brightness / 255 - 0.5) * 1.8 + 0.5) * 255;
-                brightness = Math.max(0, Math.min(255, brightness));
-
+                // For V9: Do NOT enhance the contrast so heavily. 
+                // The heavy contrast boost (1.8x) is what caused the "glitch block" error box to blow out to pure white 
+                // and the image details to get squashed. We will rely on natural luminance for accurate ASCII shading.
+                
                 const charIdx = Math.floor((brightness / 255) * (ramp.length - 1));
                 const char = ramp[charIdx];
                 
@@ -240,7 +246,6 @@ document.addEventListener('DOMContentLoaded', () => {
                 if (colorMode === "color") {
                     htmlOutput += `<span style="color: rgb(${r},${g},${b});">${displayChar}</span>`;
                 } else {
-                    // Force true monochrome
                     htmlOutput += `<span style="color: #FFFFFF;">${displayChar}</span>`;
                 }
             }

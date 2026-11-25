@@ -1,6 +1,6 @@
-# ASCII Studio (V8)
+# ASCII Studio (V9)
 
-A client-side ASCII generator that handles highly complex image generation using Pollinations AI. Includes a toggle for B&W vs Full-Color rendering, artifact/watermark scrubbing, and high-contrast noise reduction.
+A client-side ASCII generator that handles highly complex image generation using Pollinations AI. 
 
 ## Deployment to GitHub Pages
 
@@ -9,7 +9,7 @@ A client-side ASCII generator that handles highly complex image generation using
    ```bash
    git init
    git add .
-   git commit -m "Update: Removed AI watermarks and cleaned up background noise"
+   git commit -m "Update: Fixed prompt bounding box errors and scaling issues"
    git branch -M main
    git remote add origin https://github.com/matt-cstech-ftw/ASCIIstudio.git
    git push -u origin main -f
