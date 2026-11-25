@@ -13,6 +13,9 @@ document.addEventListener('DOMContentLoaded', () => {
     const removeWatermarkBtn = document.getElementById('remove-watermark-btn');
     const asciiOutputContainer = document.getElementById('ascii-output-container');
     
+    // We now use the inline Base64 src to prevent relative path breakage on mobile
+    const asLogoDataUrl = document.getElementById('as-logo-src').src;
+    
     const introModal = document.getElementById('intro-modal');
     const donateModal = document.getElementById('donate-modal');
     const helpBtn = document.getElementById('help-btn');
@@ -186,6 +189,11 @@ document.addEventListener('DOMContentLoaded', () => {
                 
                 renderImageToCanvas(ctx, currentImage, cols, rows);
                 convertCanvasToAscii(ctx, cols, rows, colorMode); 
+                
+                // Add watermark to uploaded images too if not pro
+                if (!isProUser) {
+                    addHtmlWatermark();
+                }
             } else {
                 loadingText.innerText = "Generating AI Scene...";
                 loadingSubtext.innerText = "Visualizing prompt (this may take a moment)";
@@ -208,6 +216,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     img.src = imgUrl;
                 });
                 
+                // Scrub AI watermark box
                 const markSizeW = Math.floor(cols * 0.2); 
                 const markSizeH = Math.floor(rows * 0.15); 
                 ctx.fillStyle = "black";
@@ -279,7 +288,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const wm = document.createElement('div');
         wm.className = 'watermark-overlay';
         wm.innerHTML = `
-            <img src="assets/logo.svg" alt="AS Logo">
+            <img src="${asLogoDataUrl}" alt="AS Logo">
             <div class="wm-text">ASCII<span>STUDIO</span></div>
         `;
         document.querySelector('.canvas-wrapper').appendChild(wm);
@@ -296,6 +305,11 @@ document.addEventListener('DOMContentLoaded', () => {
         const canvas = document.createElement('canvas');
         const ctx = canvas.getContext('2d');
         
+        // Remove the watermark overlay HTML block from the lines array so we don't try to render it as text
+        if (lines[lines.length - 1].includes('watermark-overlay')) {
+            lines.pop();
+        }
+
         const tempDiv = document.createElement('div');
         tempDiv.innerHTML = lines[0];
         const cols = tempDiv.childNodes.length;
@@ -339,7 +353,8 @@ document.addEventListener('DOMContentLoaded', () => {
                 
                 triggerDownload(canvas);
             };
-            asLogo.src = 'assets/logo.svg';
+            // Use embedded base64 src to ensure it loads flawlessly during export
+            asLogo.src = asLogoDataUrl;
         } else {
             triggerDownload(canvas);
         }

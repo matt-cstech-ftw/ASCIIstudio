@@ -229,18 +229,18 @@ textarea::placeholder { color: #444; }
     border: 1px solid var(--border-color);
     border-radius: var(--radius);
     position: relative;
-    overflow: hidden; /* Hide overflow outside the box */
+    overflow: hidden; 
     display: flex;
     flex-direction: column;
 }
 
 .scroll-area {
     width: 100%;
-    max-height: 70vh; /* Limits height so it stays within viewport */
-    overflow: auto; /* Allows panning around the large ASCII image */
+    max-height: 70vh; 
+    overflow: auto; 
     padding: 24px;
     text-align: center;
-    -webkit-overflow-scrolling: touch; /* Smooth scrolling on mobile */
+    -webkit-overflow-scrolling: touch;
 }
 
 #ascii-output-container {
@@ -250,12 +250,11 @@ textarea::placeholder { color: #444; }
     white-space: pre;
     text-align: center;
     letter-spacing: 0;
-    display: inline-block; /* allows it to center but not get clipped on left side when scrolling */
+    display: inline-block; 
 }
 
 /* 
  * The overlay watermark styling for the HTML output.
- * Positioned relative to the outer .canvas-wrapper so it floats above the scrollable area.
  */
 .watermark-overlay {
     position: absolute;

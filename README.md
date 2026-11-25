@@ -1,6 +1,6 @@
-# ASCII Studio (V13)
+# ASCII Studio (V14)
 
-A client-side ASCII generator featuring a secure monetization loop using the official PayPal Smart Buttons JS SDK. Updated with full mobile responsiveness (scrolling/panning) and mandatory color mode selection.
+A client-side ASCII generator featuring a secure monetization loop using the official PayPal Smart Buttons JS SDK. Updated with full mobile responsiveness and base64 embedded SVGs to prevent path resolution errors on mobile PWAs.
 
 ## Deployment to GitHub Pages
 
@@ -13,7 +13,7 @@ A client-side ASCII generator featuring a secure monetization loop using the off
    ```bash
    git init
    git add .
-   git commit -m "Update: Fixed mobile header layout, added canvas panning, and enforced color mode selection"
+   git commit -m "Update: Fixed mobile logo pathing by embedding Base64 SVG data natively"
    git branch -M main
    git remote add origin https://github.com/matt-cstech-ftw/ASCIIstudio.git
    git push -u origin main -f
