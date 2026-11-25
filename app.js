@@ -15,7 +15,9 @@ document.addEventListener('DOMContentLoaded', () => {
     const generateBtn = document.getElementById('generate-btn');
     const resetBtn = document.getElementById('reset-btn');
     const exportPng = document.getElementById('export-png');
+    const removeWatermarkBtn = document.getElementById('remove-watermark-btn');
     const asciiOutputContainer = document.getElementById('ascii-output-container');
+    const asLogoSrc = document.getElementById('as-logo-src');
     
     // Modals
     const introModal = document.getElementById('intro-modal');
@@ -24,12 +26,20 @@ document.addEventListener('DOMContentLoaded', () => {
     const supportBtn = document.getElementById('support-btn');
     const closeIntro = document.getElementById('close-intro');
     const closeDonate = document.getElementById('close-donate');
+    const paypalLink = document.getElementById('paypal-link');
     
     const loadingModal = document.getElementById('loading-modal');
     const loadingText = document.getElementById('loading-text');
     const loadingSubtext = document.getElementById('loading-subtext');
 
     let currentImage = null;
+    let isProUser = false; // State track if watermark is removed
+
+    // Check local storage for pro status (persisted across sessions)
+    if (localStorage.getItem('asciiStudioPro') === 'true') {
+        isProUser = true;
+        removeWatermarkBtn.classList.add('hidden'); // Hide button if already paid
+    }
 
     // ----- Modal Controls -----
     if (!localStorage.getItem('asciiStudioWelcome')) {
@@ -44,11 +54,22 @@ document.addEventListener('DOMContentLoaded', () => {
         introModal.classList.remove('hidden'); 
     });
     
-    supportBtn.addEventListener('click', () => {
-        donateModal.classList.remove('hidden');
-    });
-    closeDonate.addEventListener('click', () => {
+    supportBtn.addEventListener('click', () => donateModal.classList.remove('hidden'));
+    removeWatermarkBtn.addEventListener('click', () => donateModal.classList.remove('hidden'));
+    closeDonate.addEventListener('click', () => donateModal.classList.add('hidden'));
+
+    // If user clicks the donate link, we grant them pro status to remove watermark
+    paypalLink.addEventListener('click', () => {
+        isProUser = true;
+        localStorage.setItem('asciiStudioPro', 'true');
+        removeWatermarkBtn.classList.add('hidden');
         donateModal.classList.add('hidden');
+        
+        // If they just donated on the result page, regenerate without the watermark immediately
+        if (!resultView.classList.contains('hidden')) {
+            // Re-run conversion using the current canvas state but passing true to skip logo
+            reRenderCurrentState();
+        }
     });
 
     // ----- Aspect Ratio & Color Selection -----
@@ -104,15 +125,36 @@ document.addEventListener('DOMContentLoaded', () => {
         dropZone.classList.remove('image-preview-active');
         dropContent.innerHTML = `<span class="drop-title">Click to upload or drag & drop</span><span class="drop-sub">Converts image to digital character art<br>(PNG, JPG up to 10MB)</span>`;
         promptInput.disabled = false;
-        promptInput.placeholder = "Describe a complex scene, object, or concept (e.g., 'a city skyline at night')...";
+        promptInput.placeholder = "Describe a complex scene, object, or concept (e.g., 'a cute house')...";
         asciiOutputContainer.innerHTML = ''; 
     });
+
+    // Global variables to hold state for immediate re-renders (like removing watermark post-donation)
+    let globalCols, globalRows, globalColorMode;
+
+    function reRenderCurrentState() {
+        const canvas = document.getElementById('render-canvas');
+        const ctx = canvas.getContext('2d', { willReadFrequently: true });
+        
+        // Since we already have the raw image painted on the canvas, 
+        // if they are Pro, we need to scrub the corner before conversion.
+        if (isProUser && !currentImage) {
+            // Paint black over where the AI watermark/logo used to be
+            const markSize = Math.floor(globalCols * 0.15); // match scale
+            ctx.fillStyle = "black";
+            ctx.fillRect(globalCols - markSize - 1, globalRows - markSize - 1, markSize + 2, markSize + 2);
+        }
+        
+        convertCanvasToAscii(ctx, globalCols, globalRows, globalColorMode, isProUser);
+    }
 
     // ----- Main Generation Action -----
     generateBtn.addEventListener('click', async () => {
         const prompt = promptInput.value.trim();
         const ratioStr = document.querySelector('.ratio-btn.active').dataset.ratio;
-        const colorMode = document.querySelector('.color-btn.active').dataset.color; // "mono" or "color"
+        const colorMode = document.querySelector('.color-btn.active').dataset.color;
+        
+        globalColorMode = colorMode;
 
         if (!currentImage && !prompt) {
             alert("Please enter a prompt or upload an image.");
@@ -126,10 +168,12 @@ document.addEventListener('DOMContentLoaded', () => {
             const canvas = document.getElementById('render-canvas');
             const ctx = canvas.getContext('2d', { willReadFrequently: true });
             
-            // Adjust column count to ensure high fidelity ASCII mapping
             const cols = 150; 
             const [ratioW, ratioH] = ratioStr.split(':').map(Number);
             const rows = Math.round((cols * 0.5 * ratioH) / ratioW);
+            
+            globalCols = cols;
+            globalRows = rows;
             
             canvas.width = cols;
             canvas.height = rows;
@@ -140,54 +184,48 @@ document.addEventListener('DOMContentLoaded', () => {
                 await new Promise(r => setTimeout(r, 50));
                 
                 renderImageToCanvas(ctx, currentImage, cols, rows);
-                convertCanvasToAscii(ctx, cols, rows, colorMode);
+                
+                // Uploaded images don't have Pollinations watermarks, so we treat it as clean
+                convertCanvasToAscii(ctx, cols, rows, colorMode, true); 
             } else {
                 loadingText.innerText = "Generating AI Scene...";
                 loadingSubtext.innerText = "Visualizing prompt (this may take a moment)";
                 
-                // Instruct Pollinations AI based on mode. 
-                // We add "no watermark, no text" to the prompt explicitly to remove artifacts.
-                let enhancedPrompt = prompt + ", no watermark, no text, no signature, highly detailed";
+                let enhancedPrompt = prompt + ", highly detailed";
                 
-                // We use a high random seed to ensure uniqueness.
                 const seed = Math.floor(Math.random() * 10000000);
-                
-                // By requesting an image matching the exact target proportions (multiplied for quality),
-                // we ensure it maps perfectly into the ASCII grid without weird cropping or stretching.
                 const targetW = cols * 8;
                 const targetH = rows * 8;
-                // Add nologo=true to explicitly ask Pollinations to drop their watermark
-                const imgUrl = `https://image.pollinations.ai/prompt/${encodeURIComponent(enhancedPrompt)}?width=${targetW}&height=${targetH}&nologo=true&seed=${seed}`;
+                
+                // Note: we remove nologo=true to allow the AI to generate normally and avoid the error box bug entirely.
+                // We will programmatically overwrite the Pollinations logo with the AS logo (or remove it) ourselves!
+                const imgUrl = `https://image.pollinations.ai/prompt/${encodeURIComponent(enhancedPrompt)}?width=${targetW}&height=${targetH}&seed=${seed}`;
                 
                 await new Promise((resolve, reject) => {
                     const img = new Image();
                     img.crossOrigin = "Anonymous";
                     img.onload = () => {
                         renderImageToCanvas(ctx, img, cols, rows);
-                        
-                        // Wait for Pollinations bug with 'nologo=true' failing occasionally. 
-                        // The watermark error you saw in the middle is actually an error message box from the AI engine 
-                        // because it failed to generate the prompt correctly.
-                        // We will check if the center of the image contains bright white/grey text (an error box) 
-                        // and throw an error to prevent rendering a glitch block.
-                        const centerData = ctx.getImageData(cols/2 - 20, rows/2 - 10, 40, 20).data;
-                        let brightCount = 0;
-                        for(let i=0; i<centerData.length; i+=4) {
-                            if (centerData[i] > 200 && centerData[i+1] > 200 && centerData[i+2] > 200) brightCount++;
-                        }
-                        // If the center has a massive block of bright pixels that shouldn't be there 
-                        // in a standard high-contrast generation, it's likely an error bounding box.
-                        if (brightCount > 500) {
-                           // We will proceed anyway for now, but handle contrast carefully to avoid blockiness.
-                        }
-
                         resolve();
                     };
                     img.onerror = () => reject(new Error("Failed to generate AI image. Please try again."));
                     img.src = imgUrl;
                 });
                 
-                convertCanvasToAscii(ctx, cols, rows, colorMode);
+                // Check Pro status and handle the watermark zone
+                if (isProUser) {
+                    // Scrub the area entirely with black
+                    const markSize = Math.floor(cols * 0.15); // The AI logo is small in the corner
+                    ctx.fillStyle = "black";
+                    ctx.fillRect(cols - markSize, rows - markSize, markSize, markSize);
+                } else {
+                    // Overwrite the Pollinations logo with the AS logo
+                    const markW = Math.floor(cols * 0.08); // small icon
+                    const markH = markW;
+                    ctx.drawImage(asLogoSrc, cols - markW - 2, rows - markH - 2, markW, markH);
+                }
+
+                convertCanvasToAscii(ctx, cols, rows, colorMode, isProUser);
             }
 
             setupView.classList.add('hidden');
@@ -206,20 +244,16 @@ document.addEventListener('DOMContentLoaded', () => {
         ctx.fillStyle = "black";
         ctx.fillRect(0, 0, cols, rows);
         
-        // Use standard canvas scaling to fit the image exactly to the bounds.
-        // We use Math.min so it doesn't crop out edges.
         const scale = Math.min(cols / img.width, rows / img.height);
         const w = img.width * scale;
         const h = img.height * scale;
         const x = (cols - w) / 2;
         const y = (rows - h) / 2;
         
-        // Draw the image exactly matching aspect ratio bounds
         ctx.drawImage(img, x, y, w, h);
     }
 
-    function convertCanvasToAscii(ctx, cols, rows, colorMode) {
-        // High density character ramp. The far left space (' ') is crucial for black backgrounds.
+    function convertCanvasToAscii(ctx, cols, rows, colorMode, skipWatermarkCheck) {
         const ramp = " .:-=+*#%@";
         const imgData = ctx.getImageData(0, 0, cols, rows).data;
         
@@ -234,10 +268,10 @@ document.addEventListener('DOMContentLoaded', () => {
                 
                 let brightness = (0.299*r + 0.587*g + 0.114*b);
                 
-                // For V9: Do NOT enhance the contrast so heavily. 
-                // The heavy contrast boost (1.8x) is what caused the "glitch block" error box to blow out to pure white 
-                // and the image details to get squashed. We will rely on natural luminance for accurate ASCII shading.
-                
+                // Mild contrast boost to ensure dark background colors snap to black (' ')
+                brightness = ((brightness / 255 - 0.5) * 1.2 + 0.5) * 255;
+                brightness = Math.max(0, Math.min(255, brightness));
+
                 const charIdx = Math.floor((brightness / 255) * (ramp.length - 1));
                 const char = ramp[charIdx];
                 

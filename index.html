@@ -26,7 +26,7 @@
         <div id="setup-view">
             <div class="section">
                 <label>CREATION PROMPT</label>
-                <textarea id="prompt-input" placeholder="Describe a complex scene, object, or concept (e.g., 'a city skyline at night')..."></textarea>
+                <textarea id="prompt-input" placeholder="Describe a complex scene, object, or concept (e.g., 'a cute house')..."></textarea>
             </div>
 
             <div class="section-divider">OR USE SOURCE IMAGE</div>
@@ -79,6 +79,7 @@
 
             <div class="export-actions">
                 <button id="export-png" class="btn ghost">Save PNG</button>
+                <button id="remove-watermark-btn" class="btn primary">Remove Watermark</button>
             </div>
         </div>
 
@@ -90,9 +91,9 @@
             <h2>Welcome to ASCII Studio</h2>
             <p class="subheading">Your generator for complex text-art & digital styles.</p>
             <ul>
-                <li><strong>AI Prompts:</strong> Type a complex prompt. The app uses a free, keyless AI Image API to visualize your scene, bypassing watermarks, and perfectly maps the pixels to ASCII.</li>
+                <li><strong>AI Prompts:</strong> Type a complex prompt. The app uses a free AI Image API to visualize your scene and perfectly maps the pixels to ASCII.</li>
                 <li><strong>Source Images:</strong> Uploaded images bypass the AI and map directly to characters based on contrast.</li>
-                <li><strong>Color:</strong> Toggle between classic monochrome and full-color HTML output.</li>
+                <li><strong>Watermarks:</strong> The AI places a small watermark on images. We overwrite it with the ASCII Studio logo. You can remove it via a small donation.</li>
             </ul>
             <button id="close-intro" class="btn white-btn">Got it</button>
         </div>
@@ -110,9 +111,9 @@
             <div class="donate-body">
                 <div class="donate-title">Donate to</div>
                 <div class="donate-name">Matt | CS Tech Solutions</div>
-                <div class="donate-desc">Empower progress by supporting our online community tool development.</div>
+                <div class="donate-desc">Empower progress by supporting our online community tool development. Any donation unlocks the watermark removal!</div>
                 
-                <a href="https://www.paypal.com/donate/?hosted_button_id=E5ZY9CWMAV9Z6" target="_blank" class="donate-button btn-paypal">
+                <a href="https://www.paypal.com/donate/?hosted_button_id=E5ZY9CWMAV9Z6" target="_blank" class="donate-button btn-paypal" id="paypal-link">
                     <i>PayPal</i> Donate
                 </a>
                 <button class="donate-button btn-venmo">
@@ -133,6 +134,9 @@
             <p id="loading-subtext" class="subheading">Visualizing your prompt and rendering to ASCII.</p>
         </div>
     </div>
+    
+    <!-- Hidden logo data for canvas drawing -->
+    <img id="as-logo-src" src="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAxMDAgMTAwIj48cmVjdCB3aWR0aD0iMTAwIiBoZWlnaHQ9IjEwMCIgcng9IjIwIiBmaWxsPSJ3aGl0ZSIvPjx0ZXh0IHg9IjUwIiB5PSI2NSIgZm9udC1mYW1pbHk9Ii1hcHBsZS1zeXN0ZW0sIEJsaW5rTWFjU3lzdGVtRm9udCwgJ1NlZ29lIFVJJywgUm9ib3RvLCBIZWx2ZXRpY2EsIEFyaWFsLCBzYW5zLXNlcmlmIiBmb250LXdlaWdodD0iOTAwIiBmb250LXNpemU9IjQ2IiB0ZXh0LWFuY2hvcj0ibWlkZGxlIiBmaWxsPSJibGFjayIgbGV0dGVyLXNwYWNpbmc9Ii0zIj5BUzwvdGV4dD48L3N2Zz4=" hidden>
 
     <script src="app.js"></script>
 </body>

@@ -1,6 +1,6 @@
-# ASCII Studio (V9)
+# ASCII Studio (V10)
 
-A client-side ASCII generator that handles highly complex image generation using Pollinations AI. 
+A client-side ASCII generator featuring a monetization loop: replaces native AI watermarks with the AS logo and unlocks a clean render upon a PayPal donation.
 
 ## Deployment to GitHub Pages
 
@@ -9,7 +9,7 @@ A client-side ASCII generator that handles highly complex image generation using
    ```bash
    git init
    git add .
-   git commit -m "Update: Fixed prompt bounding box errors and scaling issues"
+   git commit -m "Update: Added AS logo watermark and donation removal flow"
    git branch -M main
    git remote add origin https://github.com/matt-cstech-ftw/ASCIIstudio.git
    git push -u origin main -f
